@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Commonplace: learn something real instead of scrolling.">
-<meta name="theme-color" content="#2F43C9">
+<meta name="theme-color" content="#1F5C4A">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -14,27 +14,21 @@
 <meta name="apple-mobile-web-app-title" content="Commonplace">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=DM+Sans:opsz,wght@9..40,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one-screen app shell. Scrolling main column (max 600px) over a fixed tab bar; Discover is a full-height snap feed.
-   Identity: a personal "commonplace book" indexed like a periodic table, one hue per subject, ultramarine ink as the accent. */
+   Identity ("Library"): a personal commonplace book on warm paper, Fraunces serif headings, deep green ink as the accent,
+   subjects still indexed like a periodic table with one hue each. */
 :root{
-  --bg:#EDF0F4; --surface:#FFFFFF; --sunk:#E2E7EE; --ink:#141B26; --muted:#5A6577; --line:#D2D9E3;
-  --accent:#2F43C9; --accent-ink:#FFFFFF; --good:#1D7A4E; --bad:#B4362B; --good-bg:#DCF1E5; --bad-bg:#F8E1DE;
+  --bg:#F3EDE2; --surface:#FFFBF3; --sunk:#E9E0D0; --ink:#2B241C; --muted:#7B6E5E; --line:#E3D8C6;
+  --accent:#1F5C4A; --accent-ink:#FFFBF3; --good:#2E6B3F; --bad:#A63A2B; --good-bg:#E1EBD9; --bad-bg:#F5E0D9;
   --chip-s:62%; --chip-l:91%; --tone-s:58%; --tone-l:44%; --cink-s:55%; --cink-l:27%;
-  --display:"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif:"Fraunces", Georgia, "Times New Roman", serif;
   --read:"Newsreader", Georgia, "Times New Roman", serif;
   --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
-  --r:14px;
+  --r:10px; color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0D1219; --surface:#161D28; --sunk:#1F2836; --ink:#E6EBF2; --muted:#98A3B5; --line:#2A3445;
-  --accent:#93A0FF; --accent-ink:#0D1219; --good:#62D29C; --bad:#FF8B80; --good-bg:#14342A; --bad-bg:#3C1F1D;
-  --chip-s:28%; --chip-l:19%; --tone-s:62%; --tone-l:62%; --cink-s:70%; --cink-l:82%; color-scheme:dark }}
-:root[data-theme="dark"]{
-  --bg:#0D1219; --surface:#161D28; --sunk:#1F2836; --ink:#E6EBF2; --muted:#98A3B5; --line:#2A3445;
-  --accent:#93A0FF; --accent-ink:#0D1219; --good:#62D29C; --bad:#FF8B80; --good-bg:#14342A; --bad-bg:#3C1F1D;
-  --chip-s:28%; --chip-l:19%; --tone-s:62%; --tone-l:62%; --cink-s:70%; --cink-l:82%; color-scheme:dark }
 
 html{height:100%;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
@@ -54,8 +48,8 @@ a{color:var(--accent)}
 
 /* type */
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h1{font-size:30px;line-height:1.08;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
-h2{font-size:20px;line-height:1.2;margin:0;font-weight:650;letter-spacing:-.01em;text-wrap:balance}
+h1{font-family:var(--serif);font-size:34px;line-height:1.08;margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h2{font-family:var(--serif);font-size:21px;line-height:1.2;margin:0;font-weight:600;letter-spacing:0;text-wrap:balance}
 h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .lede{font-family:var(--read);font-size:17px;line-height:1.45;color:var(--muted);margin:0}
 .muted{color:var(--muted)}
@@ -65,7 +59,7 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 .tnum{font-variant-numeric:tabular-nums}
 
 /* surfaces + controls */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 0 rgba(60,40,10,.06)}
 .btn{border:0;border-radius:999px;padding:12px 18px;font-weight:600;font-size:15px;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .btn.small{padding:8px 14px;font-size:13px}
@@ -86,7 +80,7 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 /* Today */
 .goals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .goal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.goal b{font-size:22px;font-weight:700}
+.goal b{font-family:var(--serif);font-size:24px;font-weight:600}
 .goal small{font-size:12px;color:var(--muted)}
 .goal.done{border-color:var(--good)}
 .goal .bar>i{background:var(--accent)}
@@ -102,15 +96,15 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 /* Learn: periodic tiles */
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 @media (max-width:360px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.tile{position:relative;border:1px solid hsl(var(--h) var(--chip-s) calc(var(--chip-l) - 8%));background:hsl(var(--h) var(--chip-s) var(--chip-l));color:hsl(var(--h) var(--cink-s) var(--cink-l));border-radius:12px;padding:10px 10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;aspect-ratio:1/1.02;max-width:100%}
+.tile{position:relative;border:1px solid hsl(var(--h) var(--chip-s) calc(var(--chip-l) - 8%));background:hsl(var(--h) var(--chip-s) var(--chip-l));color:hsl(var(--h) var(--cink-s) var(--cink-l));border-radius:8px;padding:10px 10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;aspect-ratio:1/1.02;max-width:100%}
 .tile .n{font-family:var(--mono);font-size:10.5px;opacity:.8}
-.tile .S{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-top:auto}
+.tile .S{font-family:var(--serif);font-size:36px;font-weight:600;letter-spacing:-.01em;line-height:1;margin-top:auto}
 .tile .nm{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile .pc{position:absolute;top:9px;right:10px;font-family:var(--mono);font-size:10.5px}
 .tile .bar{margin-top:6px;background:hsl(var(--h) var(--chip-s) calc(var(--chip-l) - 10%))}
 
 .hero{display:flex;gap:14px;align-items:center}
-.hero .big{flex:none;width:68px;height:68px;border-radius:14px;display:grid;place-items:center;font-size:30px;font-weight:700;background:hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--bg)}
+.hero .big{flex:none;width:68px;height:68px;border-radius:14px;display:grid;place-items:center;font-family:var(--serif);font-size:32px;font-weight:600;background:hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--bg)}
 .path .num{font-family:var(--mono);font-size:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--muted)}
 .path .num.done{background:hsl(var(--h) var(--tone-s) var(--tone-l));border-color:transparent;color:var(--bg)}
 .path .num.next{border:2px solid hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--ink)}
@@ -145,7 +139,7 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 .pips{display:flex;gap:4px}
 .pips i{flex:1;height:4px;border-radius:2px;background:var(--sunk)}
 .pips i.r{background:var(--good)}.pips i.w{background:var(--bad)}.pips i.c{background:var(--accent)}
-.score{font-size:56px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.score{font-family:var(--serif);font-size:58px;font-weight:600;letter-spacing:-.03em;line-height:1}
 
 /* discover feed */
 .feedwrap{height:100%;display:flex;flex-direction:column}
@@ -157,7 +151,7 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 .fcard{scroll-snap-align:start;scroll-snap-stop:always;height:100%;padding:8px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px));display:flex}
 .fin{flex:1;max-width:600px;margin:0 auto;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--line);position:relative;overflow:hidden;min-height:0}
 .fin::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:hsl(var(--h) var(--tone-s) var(--tone-l))}
-.fin h2{font-size:28px;line-height:1.12;font-weight:700;letter-spacing:-.02em;margin-top:auto}
+.fin h2{font-size:28px;line-height:1.12;font-weight:600;letter-spacing:-.01em;margin-top:auto}
 .fin p{font-family:var(--read);font-size:20px;line-height:1.5;margin:0;overflow-y:auto}
 .fin .foot{margin-top:auto;display:flex;flex-direction:column;gap:12px}
 .fin .src{font-size:13.5px;overflow-wrap:anywhere}
@@ -226,7 +220,7 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 .words{display:flex;flex-direction:column}
 .word{padding:14px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
 .word:first-of-type{border-top:0;padding-top:2px}
-.word .w{font-size:23px;font-weight:700;letter-spacing:-.01em}
+.word .w{font-family:var(--serif);font-size:25px;font-weight:600}
 .word .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .word .def{font-family:var(--read);font-size:17px;line-height:1.45}
 .word .plain{font-size:13.5px;color:var(--muted)}
@@ -32701,11 +32695,10 @@ function lessonsAt(nid){const n=NODE[nid]; return n?lessonsOf(n.cid).filter(l=>l
 function lessonsUnder(nid){const n=NODE[nid]; if(!n) return []; const ids=new Set(subtree(nid));
   return lessonsOf(n.cid).filter(l=>l.node&&ids.has(l.node)).map((l,i)=>[l,i]).sort((a,b)=>(ORDER[a[0].node]-ORDER[b[0].node])||(a[1]-b[1])).map(x=>x[0])}
 function nextIn(nid){return lessonsUnder(nid).find(l=>!S.learned[l.id])||null}
-/* Branches grow from the basics: a subject's branches open once its Foundations are learned,
-   and each narrower branch opens once you've learned at least one lesson in the branch above it. */
 function foundationsDone(cid){return CAT[cid].lessons.every(l=>S.learned[l.id])}
 function hasLearnedAt(nid){return lessonsAt(nid).some(l=>S.learned[l.id])}
-function unlocked(nid){const n=NODE[nid]; return n.parent?unlocked(n.parent)&&hasLearnedAt(n.parent):foundationsDone(n.cid)}
+/* Every branch is open: Foundations are recommended, not required. */
+function unlocked(nid){return !!NODE[nid]}
 function lessonOpen(l){return !l.node||unlocked(l.node)}
 function blocker(nid){
   const n=NODE[nid];
@@ -32921,7 +32914,7 @@ function renderToday(){
     <div class="stack">
       <div class="spread"><h3>Your shelves</h3><button class="linkbtn" data-go="tab:learn">All subjects</button></div>
       <div class="list">${CATS.map(c=>{const n=learnedLessons(c.id).length,r=retention(c.id),fd=c.lessons.filter(l=>S.learned[l.id]).length,bo=branchesOpen(c.id);
-        return `<button class="li sub" style="--h:${c.h}" data-go="cat:${c.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="spread"><span class="t">${esc(c.name)}</span><span class="s tnum">${n} learned${r!=null?" · "+pct(r)+"% retained":""}</span></span><span class="s">${fd<c.lessons.length?`Foundations ${fd} of ${c.lessons.length}`:`${bo} branch${bo===1?"":"es"} open`}</span></span><span class="muted">›</span></button>`}).join("")}</div>
+        return `<button class="li sub" style="--h:${c.h}" data-go="cat:${c.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="spread"><span class="t">${esc(c.name)}</span><span class="s tnum">${n} learned${r!=null?" · "+pct(r)+"% retained":""}</span></span><span class="s">${fd<c.lessons.length?`Foundations ${fd} of ${c.lessons.length}`:`${bo} branch${bo===1?"":"es"}`}</span></span><span class="muted">›</span></button>`}).join("")}</div>
     </div>
     ${saved.length?`<div class="stack"><h3>Saved</h3><div class="list">${saved.map(({k,o})=>{const c=CAT[o.cat];
       return k==="l"?`<button class="li sub" style="--h:${c.h}" data-go="lesson:${o.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="t">${esc(o.t)}</span><span class="s">Lesson · ${esc(c.name)}</span></span><span class="muted">›</span></button>`
@@ -32966,9 +32959,9 @@ function confirmImport(){const n=Object.keys(S.learned).length; if(!n) return tr
 function renderLearn(){
   main.innerHTML=`<div class="wrap">
     <div class="stack" style="gap:6px"><span class="eyebrow">Should-know foundations</span><h1>Learn</h1>
-    <p class="lede">Every subject starts with its Foundations. Once you know the basics, branches open into narrower areas, and each branch opens the next one down. There's always further to go.</p></div>
+    <p class="lede">Every subject has its Foundations, the basics worth knowing first, and branches that go as deep as you like. Every branch is open, so start wherever your curiosity takes you.</p></div>
     <div class="tiles">${CATS.map(c=>{const n=learnedLessons(c.id).length,fd=foundationsDone(c.id),bo=branchesOpen(c.id);
-      return `<button class="tile sub" style="--h:${c.h}" data-go="cat:${c.id}" aria-label="${esc(c.name)}, ${n} lessons learned"><span class="n">${String(c.n).padStart(2,"0")}</span><span class="pc tnum">${n?n+" learned":""}</span><span class="S">${c.sym}</span><span class="nm">${esc(c.name)}</span><span class="pathline" style="color:inherit;opacity:.8;font-size:11px">${fd?bo+" branch"+(bo===1?"":"es")+" open":"Foundations"}</span></button>`}).join("")}</div>
+      return `<button class="tile sub" style="--h:${c.h}" data-go="cat:${c.id}" aria-label="${esc(c.name)}, ${n} lessons learned"><span class="n">${String(c.n).padStart(2,"0")}</span><span class="pc tnum">${n?n+" learned":""}</span><span class="S">${c.sym}</span><span class="nm">${esc(c.name)}</span><span class="pathline" style="color:inherit;opacity:.8;font-size:11px">${bo+" branch"+(bo===1?"":"es")}</span></button>`}).join("")}</div>
   </div>`;
 }
 let genState={};   // AI lesson job per subject (foundations) or per branch
@@ -33010,7 +33003,7 @@ function renderCat(cid){
       <div class="list path">${foundationsList(cid,nx)}</div>
       ${fdone?`<div class="card" id="genLesson">${genLessonCard(cid,null)}</div>`:""}</div>
     <div class="stack"><div class="spread"><h3>Branches</h3><span class="muted" style="font-size:12.5px">Tap › to expand, a name to enter</span></div>
-      ${fdone?"":`<div class="row muted" style="font-size:13.5px;gap:8px">${LOCK}<span>Branches open once you've learned all ${c.lessons.length} Foundations ${c.units?"chapters":"lessons"} (${c.lessons.filter(l=>S.learned[l.id]).length} done). You can look ahead and follow a path now.</span></div>`}
+
       <div class="treebox" id="tree">${treeHTML(ROOTS[cid]||[],true)}</div></div>
   </div>`;
   wireGenLesson(cid,null);
@@ -33032,7 +33025,7 @@ function renderNode(id){
       ${b.lesson?`<button class="btn small" style="align-self:flex-start" data-go="lesson:${b.lesson.id}">Next step: ${esc(b.lesson.t)}</button>`:b.node?`<button class="btn small" style="align-self:flex-start" data-go="node:${b.node}">Go to ${esc(NODE[b.node].name)}</button>`:""}</div>`:""}
     ${here.length?`<div class="stack"><h3>${n.children.length?"Overview of this branch":"Lessons"}</h3><div class="list path">${here.map((l,i)=>lessonRow(l,i,nx&&nx.id===l.id)).join("")}</div></div>`:""}
     ${un?`<div class="card" id="genLesson">${genLessonCard(c.id,id)}</div>`:""}
-    ${n.children.length?`<div class="stack"><h3>Narrower branches</h3>${un&&!hasLearnedAt(id)?`<p class="muted" style="margin:0;font-size:13.5px">These open after you learn a lesson in ${esc(n.name)}.</p>`:""}<div class="list">${n.children.map(k=>{const kn=NODE[k],kd=lessonsUnder(k).filter(l=>S.learned[l.id]).length,ku=unlocked(k);
+    ${n.children.length?`<div class="stack"><h3>Narrower branches</h3><div class="list">${n.children.map(k=>{const kn=NODE[k],kd=lessonsUnder(k).filter(l=>S.learned[l.id]).length,ku=unlocked(k);
       return `<button class="li" data-go="node:${k}"><span class="leaf" aria-hidden="true"></span><span class="mid"><span class="spread"><span class="t" ${ku?"":'style="color:var(--muted)"'}>${esc(kn.name)}</span><span class="s tnum">${ku?(kd?kd+" learned":""):LOCK}</span></span>${kn.children.length?`<span class="s">${kn.children.map(x=>esc(NODE[x].name)).join(" · ")}</span>`:""}</span><span class="muted">›</span></button>`}).join("")}</div></div>`:""}
   </div>`;
   $("#followB").onclick=()=>{if(S.follow[id]) delete S.follow[id]; else S.follow[id]=Date.now(); save(); renderNode(id)};
