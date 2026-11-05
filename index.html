@@ -32899,7 +32899,7 @@ function renderToday(){
       <p class="muted" style="margin:0;font-size:14px;line-height:1.45">Move your progress to another copy of Commonplace, or keep a backup. Export copies a code; Import loads one.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost small" id="expP">Export progress</button><button class="btn ghost small" id="impP">Import progress</button></div>
       <textarea id="pTxt" hidden rows="4" style="width:100%;box-sizing:border-box;font:12px ui-monospace,monospace;border-radius:10px;padding:8px" placeholder="Paste a progress code here"></textarea>
-      <div style="display:flex;gap:8px" id="pRow" hidden><button class="btn small" id="pGo">Load this progress</button><span class="muted" id="pMsg" style="font-size:13px;align-self:center"></span></div>
+      <div style="display:none;gap:8px" id="pRow"><button class="btn small" id="pGo">Load this progress</button><span class="muted" id="pMsg" style="font-size:13px;align-self:center"></span></div>
     </div>
     ${inClaude?"":`<div class="card" style="gap:8px">
       <div class="spread"><h3>Claude helper</h3><span class="tag">${helperCfg()?(sample?"connected":"saved"):"not set up"}</span></div>
@@ -32918,10 +32918,10 @@ function renderToday(){
   const ho=document.getElementById("hOff");
   if(ho) ho.onclick=()=>{try{localStorage.removeItem(HK)}catch(e){} location.reload()};
   const tx=document.getElementById("pTxt"),row=document.getElementById("pRow"),msg=document.getElementById("pMsg");
-  document.getElementById("expP").onclick=async()=>{const code=JSON.stringify(S); tx.hidden=false; row.hidden=true; tx.value=code; tx.select();
+  document.getElementById("expP").onclick=async()=>{const code=JSON.stringify(S); tx.hidden=false; row.style.display="none"; tx.value=code; tx.select();
     try{await navigator.clipboard.writeText(code); tx.insertAdjacentHTML("afterend","")}catch(e){}
     try{const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([code],{type:"application/json"})); a.download="commonplace-progress-"+dayKey()+".json"; a.click()}catch(e){}};
-  document.getElementById("impP").onclick=()=>{tx.hidden=false; row.hidden=false; tx.value=""; msg.textContent=""; tx.focus()};
+  document.getElementById("impP").onclick=()=>{tx.hidden=false; row.style.display="flex"; tx.value=""; msg.textContent=""; tx.focus()};
   document.getElementById("pGo").onclick=()=>{try{const o=JSON.parse(tx.value.trim()); if(!o||typeof o!=="object"||!o.learned) throw 0;
       if(!confirmImport()) return; S=Object.assign(blank(),o); S.updated=Date.now(); try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
       if(typeof dirty!=="undefined"){dirty.add("progress"); CATS.forEach(c=>dirty.add("gen-"+c.id)); if(typeof flush==="function") flush()}
