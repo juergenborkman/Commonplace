@@ -1,0 +1,936 @@
+<title>Commonplace</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Commonplace">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen app shell. Scrolling main column (max 600px) over a fixed tab bar; Discover is a full-height snap feed.
+   Identity: a personal "commonplace book" indexed like a periodic table, one hue per subject, ultramarine ink as the accent. */
+:root{
+  --bg:#EDF0F4; --surface:#FFFFFF; --sunk:#E2E7EE; --ink:#141B26; --muted:#5A6577; --line:#D2D9E3;
+  --accent:#2F43C9; --accent-ink:#FFFFFF; --good:#1D7A4E; --bad:#B4362B; --good-bg:#DCF1E5; --bad-bg:#F8E1DE;
+  --chip-s:62%; --chip-l:91%; --tone-s:58%; --tone-l:44%; --cink-s:55%; --cink-l:27%;
+  --display:"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --read:"Newsreader", Georgia, "Times New Roman", serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1219; --surface:#161D28; --sunk:#1F2836; --ink:#E6EBF2; --muted:#98A3B5; --line:#2A3445;
+  --accent:#93A0FF; --accent-ink:#0D1219; --good:#62D29C; --bad:#FF8B80; --good-bg:#14342A; --bad-bg:#3C1F1D;
+  --chip-s:28%; --chip-l:19%; --tone-s:62%; --tone-l:62%; --cink-s:70%; --cink-l:82%; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0D1219; --surface:#161D28; --sunk:#1F2836; --ink:#E6EBF2; --muted:#98A3B5; --line:#2A3445;
+  --accent:#93A0FF; --accent-ink:#0D1219; --good:#62D29C; --bad:#FF8B80; --good-bg:#14342A; --bad-bg:#3C1F1D;
+  --chip-s:28%; --chip-l:19%; --tone-s:62%; --tone-l:62%; --cink-s:70%; --cink-l:82%; color-scheme:dark }
+
+html{height:100%;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--display);font-size:15px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{height:100%;display:flex;flex-direction:column}
+#main{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.wrap{max-width:600px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:18px 28px;display:flex;flex-direction:column;gap:18px}
+
+/* tab bar */
+#nav{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-left:max(8px, env(safe-area-inset-left, 0px));padding-right:max(8px, env(safe-area-inset-right, 0px))}
+#nav button{background:none;border:0;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;letter-spacing:.02em;color:var(--muted)}
+#nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#nav button[aria-current="page"]{color:var(--accent);font-weight:600}
+
+/* type */
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:30px;line-height:1.08;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:20px;line-height:1.2;margin:0;font-weight:650;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-family:var(--read);font-size:17px;line-height:1.45;color:var(--muted);margin:0}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:10px}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* surfaces + controls */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.btn{border:0;border-radius:999px;padding:12px 18px;font-weight:600;font-size:15px;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:8px 14px;font-size:13px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.5;cursor:default}
+.back{background:none;border:0;padding:4px 0;color:var(--muted);font-size:14px;display:inline-flex;align-items:center;gap:4px;align-self:flex-start}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-size:14px;font-weight:600}
+
+/* subject color system: every subject sets --h */
+.sub{--h:220}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border-radius:999px;font-size:12px;font-weight:600;background:hsl(var(--h) var(--chip-s) var(--chip-l));color:hsl(var(--h) var(--cink-s) var(--cink-l));white-space:nowrap}
+.sym{font-family:var(--mono);font-weight:500;font-size:11px;width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;background:hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--bg)}
+.bar{height:5px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.bar>i{display:block;height:100%;background:hsl(var(--h) var(--tone-s) var(--tone-l));border-radius:3px}
+.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.ok{border-color:transparent;background:var(--good-bg);color:var(--good)}
+
+/* Today */
+.goals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.goal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.goal b{font-size:22px;font-weight:700}
+.goal small{font-size:12px;color:var(--muted)}
+.goal.done{border-color:var(--good)}
+.goal .bar>i{background:var(--accent)}
+.goal.done .bar>i{background:var(--good)}
+.streak{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.li{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border:0;border-top:1px solid var(--line);background:none;text-align:left;width:100%}
+.li:first-child{border-top:0}
+.li .t{font-weight:600;font-size:15px;min-width:0}
+.li .s{font-size:12.5px;color:var(--muted);margin-top:2px}
+.li .mid{min-width:0;display:flex;flex-direction:column;gap:6px}
+
+/* Learn: periodic tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:360px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{position:relative;border:1px solid hsl(var(--h) var(--chip-s) calc(var(--chip-l) - 8%));background:hsl(var(--h) var(--chip-s) var(--chip-l));color:hsl(var(--h) var(--cink-s) var(--cink-l));border-radius:12px;padding:10px 10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;aspect-ratio:1/1.02;max-width:100%}
+.tile .n{font-family:var(--mono);font-size:10.5px;opacity:.8}
+.tile .S{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-top:auto}
+.tile .nm{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .pc{position:absolute;top:9px;right:10px;font-family:var(--mono);font-size:10.5px}
+.tile .bar{margin-top:6px;background:hsl(var(--h) var(--chip-s) calc(var(--chip-l) - 10%))}
+
+.hero{display:flex;gap:14px;align-items:center}
+.hero .big{flex:none;width:68px;height:68px;border-radius:14px;display:grid;place-items:center;font-size:30px;font-weight:700;background:hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--bg)}
+.path .num{font-family:var(--mono);font-size:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--muted)}
+.path .num.done{background:hsl(var(--h) var(--tone-s) var(--tone-l));border-color:transparent;color:var(--bg)}
+.path .num.next{border:2px solid hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--ink)}
+
+/* lesson */
+.points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;font-family:var(--read);font-size:18.5px;line-height:1.5;max-width:65ch}
+.points li{display:grid;grid-template-columns:14px 1fr;gap:10px}
+.points li::before{content:"";width:7px;height:7px;margin-top:.62em;border-radius:2px;background:hsl(var(--h) var(--tone-s) var(--tone-l))}
+.why{border-left:3px solid hsl(var(--h) var(--tone-s) var(--tone-l));padding:2px 0 2px 14px;font-family:var(--read);font-size:17px;line-height:1.5}
+.sources{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.sources a{overflow-wrap:anywhere}
+.check{font-size:13px;display:flex;gap:8px;align-items:flex-start;background:var(--good-bg);color:var(--good);border-radius:10px;padding:10px 12px}
+
+/* AI progress */
+.gen{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.step{display:flex;gap:8px;align-items:center;color:var(--muted)}
+.step.on{color:var(--ink)}
+.step.ok{color:var(--good)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.step.on .dot{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+.err{color:var(--bad);font-size:14px}
+
+/* quiz */
+.qtext{font-family:var(--read);font-size:22px;line-height:1.35;margin:0;text-wrap:balance}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;text-align:left;font-size:16px;display:flex;gap:10px;align-items:center}
+.choice .k{font-family:var(--mono);font-size:12px;color:var(--muted);width:18px;flex:none}
+.choice.right{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.choice.wrong{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.choice[disabled]{cursor:default}
+.pips{display:flex;gap:4px}
+.pips i{flex:1;height:4px;border-radius:2px;background:var(--sunk)}
+.pips i.r{background:var(--good)}.pips i.w{background:var(--bad)}.pips i.c{background:var(--accent)}
+.score{font-size:56px;font-weight:700;letter-spacing:-.03em;line-height:1}
+
+/* discover feed */
+.feedwrap{height:100%;display:flex;flex-direction:column}
+.filters{flex:none;display:flex;gap:6px;overflow-x:auto;padding:12px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.feed{flex:1;min-height:0;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain}
+.fcard{scroll-snap-align:start;scroll-snap-stop:always;height:100%;padding:8px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px));display:flex}
+.fin{flex:1;max-width:600px;margin:0 auto;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--line);position:relative;overflow:hidden;min-height:0}
+.fin::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:hsl(var(--h) var(--tone-s) var(--tone-l))}
+.fin h2{font-size:28px;line-height:1.12;font-weight:700;letter-spacing:-.02em;margin-top:auto}
+.fin p{font-family:var(--read);font-size:20px;line-height:1.5;margin:0;overflow-y:auto}
+.fin .foot{margin-top:auto;display:flex;flex-direction:column;gap:12px}
+.fin .src{font-size:13.5px;overflow-wrap:anywhere}
+.save{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.save svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.save[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+.save[aria-pressed="true"] svg{fill:currentColor}
+.hint{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;letter-spacing:.06em}
+.counter{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+/* branch tree */
+.treebox{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px 8px 4px}
+.tree{list-style:none;margin:0;padding:0}
+.tree .tree{margin-left:17px;padding-left:8px;border-left:1.5px solid hsl(var(--h) var(--chip-s) calc(var(--chip-l) - 14%))}
+.trow{display:flex;align-items:center;gap:2px;min-height:42px}
+.tg{flex:none;width:30px;height:30px;border:0;background:none;color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px;transition:transform .15s}
+.tg[aria-expanded="true"]{transform:rotate(90deg);color:hsl(var(--h) var(--tone-s) var(--tone-l))}
+.leaf{flex:none;width:30px;display:grid;place-items:center}
+.leaf::before{content:"";width:6px;height:6px;border-radius:50%;background:hsl(var(--h) var(--tone-s) var(--tone-l))}
+.tn{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:9px 8px;border-radius:9px;font-size:15px}
+.tn:hover{background:var(--sunk)}
+.tname{flex:1;min-width:0}
+.root>li>.trow .tname{font-weight:650}
+.tcount{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.tcount.done{color:var(--good)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:13.5px;color:var(--muted)}
+.crumbs button{background:none;border:0;padding:0;color:var(--muted);font-size:13.5px;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.crumbs .sep{opacity:.6}
+.follow{border:1px solid hsl(var(--h) var(--tone-s) var(--tone-l));color:hsl(var(--h) var(--cink-s) var(--cink-l));background:none;border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.follow[aria-pressed="true"]{background:hsl(var(--h) var(--tone-s) var(--tone-l));color:var(--bg);border-color:transparent}
+.pathline{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* course chapters */
+.unithead{padding:12px 14px 6px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--h) var(--cink-s) var(--cink-l));background:hsl(var(--h) var(--chip-s) var(--chip-l))}
+.list .unithead:first-child{border-top:0}
+.readbar{position:sticky;top:0;z-index:5;height:3px;background:var(--sunk);margin:-18px calc(-1 * max(16px, env(safe-area-inset-left, 0px))) 0}
+.readbar>i{display:block;height:100%;width:0;background:hsl(var(--h) var(--tone-s) var(--tone-l))}
+.toc{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none;counter-reset:toc}
+.toc button{background:none;border:0;padding:7px 0;text-align:left;font-size:14.5px;color:var(--ink);display:flex;gap:10px;width:100%}
+.toc button::before{counter-increment:toc;content:counter(toc);font-family:var(--mono);font-size:11.5px;color:var(--muted);width:18px;flex:none;padding-top:2px}
+.chapter{display:flex;flex-direction:column;gap:30px}
+.chapter section{display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px}
+.chapter h2{font-size:22px}
+.chapter p{font-family:var(--read);font-size:18.5px;line-height:1.62;margin:0;max-width:65ch}
+.terms{margin:0;display:flex;flex-direction:column;gap:12px}
+.terms dt{font-weight:650;font-size:15px}
+.terms dd{margin:2px 0 0;font-family:var(--read);font-size:16.5px;line-height:1.45;color:var(--muted)}
+.resume{position:sticky;top:10px;z-index:6;align-self:center}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div id="app">
+  <main id="main" tabindex="-1"></main>
+  <nav id="nav" aria-label="Sections">
+    <button data-tab="today"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Today</button>
+    <button data-tab="learn"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.7 3.7 4 4.5 4H10c1.1 0 2 .9 2 2v14c0-1.1-.9-2-2-2H4.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M21 5.5c0-.8-.7-1.5-1.5-1.5H14c-1.1 0-2 .9-2 2v14c0-1.1.9-2 2-2h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg>Learn</button>
+    <button data-tab="quiz"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.5l2.7 2.7L16.5 9"/></svg>Quiz</button>
+    <button data-tab="discover"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Discover</button>
+  </nav>
+</div>
+
+<script>
+/*CONTENT*/
+
+/* ---------- constants ---------- */
+const TABS=["today","learn","quiz","discover"];
+const INTERVALS=[0,1,3,7,16,35];          // days until the next review, by box (0 = new or missed)
+const DAY=864e5;
+const GOALS={l:1,q:6,f:10};
+const SESSION=6;
+const LS="commonplace.v1";
+const BOOK='<svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>';
+
+/* ---------- content index ---------- */
+const CAT={};
+CATS.forEach((c,i)=>{
+  c.n=i+1; CAT[c.id]=c;
+  if(COURSES[c.id]){
+    /* A full Foundations course: units of chapters, each chapter made of titled sections */
+    c.units=COURSES[c.id].units.map(u=>u.t);
+    c.lessons=COURSES[c.id].units.flatMap((u,ui)=>u.ch.map(ch=>Object.assign(ch,{unit:ui})));
+    c.lessons.forEach((l,j)=>{l.id=c.id+"-"+(l.key||("c"+j)); l.cat=c.id; l.chap=j+1;
+      l.words=l.sec.flatMap(s=>s[1]).join(" ").split(/\s+/).length; l.mins=Math.max(1,Math.round(l.words/200))});
+  } else c.lessons.forEach((l,j)=>{l.id=c.id+"-b"+j; l.cat=c.id});
+  c.factList=c.facts.map((f,j)=>({id:c.id+"-f"+j,cat:c.id,t:f[0],x:f[1],src:[f[2]]}));
+  c.branchLessons=[];
+});
+
+/* ---------- branch trees ---------- */
+const slug=s=>String(s).toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const NODE={}, ROOTS={}, ORDER={};
+let orderN=0;
+function addNodes(cid,list,parent){
+  return list.map(item=>{
+    const name=Array.isArray(item)?item[0]:item, kids=Array.isArray(item)?item[1]:[];
+    const id=(parent?parent.id:cid)+"/"+slug(name);
+    const n={id,cid,name,parent:parent?parent.id:null,path:parent?[...parent.path,name]:[name],children:[]};
+    NODE[id]=n; ORDER[id]=orderN++;
+    n.children=addNodes(cid,kids,n).map(k=>k.id);
+    return n;
+  });
+}
+CATS.forEach(c=>{ROOTS[c.id]=addNodes(c.id,TREES[c.id]||[],null).map(n=>n.id)});
+Object.entries(BRANCH_LESSONS).forEach(([key,ls])=>{
+  const [cid,rest]=key.split(": "); const id=cid+"/"+rest.split(" > ").map(slug).join("/");
+  if(!NODE[id]||!CAT[cid]){console.warn("Branch not found:",key); return}
+  ls.forEach((l,i)=>{l.id=cid+"-n."+id.split("/").slice(1).join(".")+"."+i; l.cat=cid; l.node=id; CAT[cid].branchLessons.push(l)});
+});
+function subtree(id){const out=[id]; (NODE[id]?NODE[id].children:[]).forEach(k=>out.push(...subtree(k))); return out}
+
+/* ---------- state ---------- */
+function blank(){return {updated:0,learned:{},seen:{},saved:{},quiz:{},days:{},gen:{},follow:{}}}
+let S=blank();
+try{const raw=localStorage.getItem(LS); if(raw) S=Object.assign(blank(),JSON.parse(raw))}catch(e){}
+
+const dayKey=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function gen(cid){return S.gen[cid]||(S.gen[cid]={lessons:[],facts:[]})}
+function lessonsOf(cid){return CAT[cid].lessons.concat(CAT[cid].branchLessons,gen(cid).lessons)}
+function trunkOf(cid){return CAT[cid].lessons.concat(gen(cid).lessons.filter(l=>!l.node))}
+function lessonsAt(nid){const n=NODE[nid]; return n?lessonsOf(n.cid).filter(l=>l.node===nid):[]}
+function lessonsUnder(nid){const n=NODE[nid]; if(!n) return []; const ids=new Set(subtree(nid));
+  return lessonsOf(n.cid).filter(l=>l.node&&ids.has(l.node)).map((l,i)=>[l,i]).sort((a,b)=>(ORDER[a[0].node]-ORDER[b[0].node])||(a[1]-b[1])).map(x=>x[0])}
+function nextIn(nid){return lessonsUnder(nid).find(l=>!S.learned[l.id])||null}
+/* Branches grow from the basics: a subject's branches open once its Foundations are learned,
+   and each narrower branch opens once you've learned at least one lesson in the branch above it. */
+function foundationsDone(cid){return CAT[cid].lessons.every(l=>S.learned[l.id])}
+function hasLearnedAt(nid){return lessonsAt(nid).some(l=>S.learned[l.id])}
+function unlocked(nid){const n=NODE[nid]; return n.parent?unlocked(n.parent)&&hasLearnedAt(n.parent):foundationsDone(n.cid)}
+function lessonOpen(l){return !l.node||unlocked(l.node)}
+function blocker(nid){
+  const n=NODE[nid];
+  if(!foundationsDone(n.cid)){const fl=CAT[n.cid].lessons, d=fl.filter(l=>S.learned[l.id]).length;
+    return {text:`Learn the ${CAT[n.cid].name} Foundations first (${d} of ${fl.length} done).`,lesson:fl.find(l=>!S.learned[l.id]),node:null}}
+  const chain=[]; let p=n.parent; while(p){chain.unshift(p); p=NODE[p].parent}
+  for(const a of chain) if(!hasLearnedAt(a)) return {text:`Learn a lesson in ${NODE[a].name} first.`,lesson:lessonsAt(a).find(l=>!S.learned[l.id])||null,node:a};
+  return null;
+}
+function branchesOpen(cid){return Object.values(NODE).filter(n=>n.cid===cid&&unlocked(n.id)).length}
+const LOCK='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" style="flex:none;stroke:currentColor;fill:none;stroke-width:2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+function crumbNames(nid,max){const p=NODE[nid].path; return (max&&p.length>max?["…",...p.slice(-max)]:p).join(" › ")}
+function factsOf(cid){return CAT[cid].factList.concat(gen(cid).facts)}
+function findLesson(id){const cid=id.split("-")[0]; return CAT[cid]?lessonsOf(cid).find(l=>l.id===id):null}
+function findFact(id){const cid=id.split("-")[0]; return CAT[cid]?factsOf(cid).find(f=>f.id===id):null}
+function questionsOf(l){return l.q.map((x,i)=>({id:l.id+"#"+i,lesson:l,q:x[0],a:x[1],w:x.slice(2)}))}
+function learnedLessons(cid){return lessonsOf(cid).filter(l=>S.learned[l.id])}
+function poolFor(cid){const cats=cid?[cid]:CATS.map(c=>c.id); return cats.flatMap(c=>learnedLessons(c).flatMap(questionsOf))}
+function isDue(q,now=Date.now()){const r=S.quiz[q.id]; return !r||r.d<=now}
+function retention(cid){const p=poolFor(cid); if(!p.length) return null; return p.reduce((s,q)=>s+((S.quiz[q.id]||{}).b||0),0)/(p.length*5)}
+function bump(k){const d=dayKey(); const o=S.days[d]||(S.days[d]={l:0,q:0,f:0}); o[k]++}
+function todayCounts(){return S.days[dayKey()]||{l:0,q:0,f:0}}
+function streak(){
+  let n=0; const d=new Date();
+  if(!S.days[dayKey(d)]) d.setDate(d.getDate()-1);
+  while(S.days[dayKey(d)]){n++; d.setDate(d.getDate()-1)}
+  return n;
+}
+function nextLesson(cid){return trunkOf(cid).find(l=>!S.learned[l.id])||null}
+
+/* ---------- persistence: this browser + the viewer's private store ---------- */
+let db=null, base=null, sample=null, flushTimer=null, writing=false;
+const dirty=new Set();
+function save(genCat){
+  S.updated=Date.now();
+  try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+  dirty.add("progress"); if(genCat) dirty.add("gen-"+genCat);
+  clearTimeout(flushTimer); flushTimer=setTimeout(flush,1200);
+}
+function payload(k){
+  if(k==="progress"){const {gen:_g,...p}=S; return {json:JSON.stringify(p),updated:S.updated}}
+  return {json:JSON.stringify(gen(k.slice(4))),updated:Date.now()};
+}
+async function flush(){
+  if(!db) return;
+  if(writing){clearTimeout(flushTimer); flushTimer=setTimeout(flush,1200); return}
+  writing=true;
+  const keys=[...dirty]; dirty.clear();
+  for(const k of keys){
+    try{await db.doc(base+"/"+k).set(payload(k))}
+    catch(e){console.warn("save failed",k,e&&e.code); if(e&&e.code==="unavailable") dirty.add(k)}
+  }
+  writing=false;
+  if(dirty.size){clearTimeout(flushTimer); flushTimer=setTimeout(flush,4000)}
+}
+function unionById(a,b){const m=new Map(); [...a,...b].forEach(x=>{if(x&&x.id&&!m.has(x.id)) m.set(x.id,x)}); return [...m.values()]}
+
+/* ---------- Claude helper (website version): a Cloudflare Worker that holds the API key ---------- */
+const HK="commonplace-helper";
+function helperCfg(){try{const h=JSON.parse(localStorage.getItem(HK)||"null"); return h&&h.url&&h.pass?h:null}catch(e){return null}}
+async function helperCall(h,path,opt={}){
+  const r=await fetch(h.url.replace(/\/+$/,"")+path,{...opt,headers:{"Content-Type":"application/json","X-Passphrase":h.pass,...(opt.headers||{})}});
+  let body={}; try{body=await r.json()}catch(e){}
+  if(!r.ok){const err=new Error(body.error||("Helper error "+r.status)); err.code=r.status===401?"unauthenticated":r.status>=500?"unavailable":"failed"; throw err}
+  return body;
+}
+function helperSample(h){return {json:async(prompt,o={})=>(await helperCall(h,"/generate",{method:"POST",signal:o.signal,body:JSON.stringify({prompt,tier:o.modelTier||""})})).json}}
+function helperDb(h){return {doc:path=>({
+  get:async()=>{const b=await helperCall(h,"/doc?path="+encodeURIComponent(path)); return {exists:!!b.exists,data:()=>b.data}},
+  set:async obj=>{await helperCall(h,"/doc?path="+encodeURIComponent(path),{method:"PUT",body:JSON.stringify(obj)})}})}}
+const inClaude=!!(window.claude&&window.claude.use);
+
+(async function connect(){
+  let d=null,id=null;
+  if(inClaude){
+    window.claude.use("sample").then(s=>{if(s){sample=s; refreshAI()}}).catch(()=>{});
+    const [dd,u]=await Promise.all([window.claude.use("db"),window.claude.use("user")]).catch(()=>[null,null]);
+    if(!dd||!u) return;
+    try{id=await u.id()}catch(e){}
+    d=dd;
+  } else {
+    const h=helperCfg(); if(!h) return;
+    sample=helperSample(h); setTimeout(()=>{try{refreshAI()}catch(e){}},0);
+    d=helperDb(h); id="me";
+  }
+  if(!d||!id) return;
+  db=d; base="data/users/"+id;
+  try{
+    const snap=await db.doc(base+"/progress").get();
+    if(snap.exists){
+      const body=snap.data(); const remote=JSON.parse(body.json||"{}");
+      if((body.updated||0)>=S.updated){const g=S.gen; S=Object.assign(blank(),remote); S.gen=g; S.updated=body.updated||0}
+      else dirty.add("progress");
+    } else if(S.updated) dirty.add("progress");
+    const snaps=await Promise.all(CATS.map(c=>db.doc(base+"/gen-"+c.id).get()));
+    snaps.forEach((g,i)=>{
+      const cid=CATS[i].id, loc=gen(cid);
+      if(g.exists){
+        const r=JSON.parse(g.data().json||"{}");
+        const L=unionById(loc.lessons,r.lessons||[]), F=unionById(loc.facts,r.facts||[]);
+        if(L.length>(r.lessons||[]).length||F.length>(r.facts||[]).length) dirty.add("gen-"+cid);
+        S.gen[cid]={lessons:L,facts:F};
+      } else if(loc.lessons.length||loc.facts.length) dirty.add("gen-"+cid);
+    });
+    try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+    if(view.tab!=="discover"||view.sub) render();
+    if(dirty.size) flush();
+  }catch(e){console.warn("load failed",e&&e.code)}
+})();
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const main=$("#main");
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const wiki=t=>"https://en.wikipedia.org/wiki/"+encodeURIComponent(String(t).trim().replace(/ /g,"_"));
+const pct=x=>Math.round((x||0)*100);
+function shuffle(a){a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a}
+const chip=c=>`<span class="chip sub" style="--h:${c.h}"><span class="sym">${c.sym}</span>${esc(c.name)}</span>`;
+function sourcesHTML(list){return `<div class="sources">${list.map(t=>`<a href="${wiki(t)}" target="_blank" rel="noopener">Wikipedia: ${esc(t)} ↗</a>`).join("")}</div>`}
+function aiErr(e){
+  const c=e&&e.code;
+  if(c==="cancelled") return "";
+  if(c==="not_granted") return "Claude access was declined for this page. You can allow it from the page's permissions menu, then try again.";
+  if(c==="rate_limited") return "You've reached a Claude usage limit. Try again a little later.";
+  if(c==="invalid_json") return "The answer came back in an unreadable format. Try again.";
+  if(c==="session_expired") return "Your Claude session expired. Sign in again, then try again.";
+  if(e&&e.message&&!c) return e.message;
+  return "Couldn't reach Claude. Check your connection and try again.";
+}
+
+/* ---------- routing ---------- */
+let view={tab:TABS.includes(location.hash.slice(1))?location.hash.slice(1):"today",sub:null};
+function go(tab,sub=null){
+  view={tab,sub};
+  if(location.hash.slice(1)!==tab){try{history.replaceState(null,"","#"+tab)}catch(e){location.hash=tab}}
+  render(true);
+}
+window.addEventListener("hashchange",()=>{const t=location.hash.slice(1); if(TABS.includes(t)&&t!==view.tab) go(t)});
+document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.tab)));
+let feedObserver=null;
+function render(top){
+  document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===view.tab?"page":"false"));
+  if(feedObserver){feedObserver.disconnect(); feedObserver=null}
+  readingId=null;
+  const s=view.sub;
+  if(s&&s.type==="cat") renderCat(s.cid);
+  else if(s&&s.type==="node") renderNode(s.id);
+  else if(s&&s.type==="lesson") renderLesson(s.id);
+  else if(s&&s.type==="session") renderSession();
+  else ({today:renderToday,learn:renderLearn,quiz:renderQuiz,discover:renderDiscover})[view.tab]();
+  if(top) main.scrollTop=0;
+}
+main.addEventListener("click",e=>{
+  const tg=e.target.closest("[data-tg]");
+  if(tg){const id=tg.dataset.tg; openNodes.has(id)?openNodes.delete(id):openNodes.add(id); const box=$("#tree"); if(box) box.innerHTML=treeHTML(ROOTS[NODE[id].cid],true); return}
+  const t=e.target.closest("[data-go]"); if(!t) return;
+  const [kind,arg]=t.dataset.go.split(":");
+  if(kind==="tab") go(arg);
+  else if(kind==="cat") go("learn",{type:"cat",cid:arg});
+  else if(kind==="node") go(view.tab==="today"?"today":"learn",{type:"node",id:arg});
+  else if(kind==="lesson") go(view.tab==="today"?"today":"learn",{type:"lesson",id:arg,from:view.sub});
+  else if(kind==="review") startSession(arg||null,false);
+  else if(kind==="practice") startSession(arg||null,true);
+});
+
+/* ---------- TODAY ---------- */
+function followed(){return Object.keys(S.follow).filter(id=>NODE[id]).sort((a,b)=>S.follow[a]-S.follow[b])}
+function suggestion(){
+  for(const id of followed()){
+    if(unlocked(id)){const nx=nextIn(id); if(nx) return {c:CAT[NODE[id].cid],next:nx,where:NODE[id].name}}
+    else{const b=blocker(id); if(b&&b.lesson) return {c:CAT[NODE[id].cid],next:b.lesson,where:NODE[id].name,toward:true}}
+  }
+  const day=Math.floor(Date.now()/DAY);
+  const ranked=CATS.map((c,i)=>({c,i,n:learnedLessons(c.id).length,next:nextLesson(c.id)}))
+    .filter(x=>x.next).sort((a,b)=>a.n-b.n||((a.i+day)%11)-((b.i+day)%11));
+  return ranked[0]||null;
+}
+function renderToday(){
+  const t=todayCounts(), now=new Date(), h=now.getHours();
+  const greet=h<12?"Good morning":h<18?"Good afternoon":"Good evening";
+  const due=poolFor(null).filter(q=>isDue(q)).length;
+  const sug=suggestion();
+  const saved=Object.keys(S.saved).map(id=>{const l=findLesson(id); return l?{k:"l",o:l}:{k:"f",o:findFact(id)}}).filter(x=>x.o);
+  const paths=followed();
+  const st=streak();
+  const g=(k,label,unit)=>{const v=t[k]||0,goal=GOALS[k]; return `<div class="goal ${v>=goal?"done":""}"><small>${label}</small><b class="tnum">${v}<span class="muted" style="font-size:14px;font-weight:500">/${goal}</span></b><div class="bar"><i style="width:${Math.min(100,v/goal*100)}%"></i></div><small>${unit}</small></div>`};
+  main.innerHTML=`<div class="wrap">
+    <div class="stack" style="gap:6px">
+      <div class="spread"><span class="eyebrow">${now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><span class="streak tnum">${st?st+"-day streak":"Start a streak today"}</span></div>
+      <h1>${greet}.</h1>
+      <p class="lede">Ten minutes here instead of the feed. Learn one thing, test yourself, find something surprising.</p>
+    </div>
+    <div class="goals">${g("l","Learn","lesson")}${g("q","Quiz","answers")}${g("f","Discover","facts")}</div>
+    ${sug?`<div class="card sub" style="--h:${sug.c.h}">
+      <div class="spread"><h3>Next up</h3>${chip(sug.c)}</div>
+      <div class="stack" style="gap:4px"><h2>${esc(sug.next.t)}</h2><div class="muted" style="font-size:14px">${sug.where?(sug.toward?"Opens the way to "+esc(sug.where):"On your path: "+esc(sug.where)):(sug.next.sec?"Foundations · Unit "+(sug.next.unit+1)+", Chapter "+sug.next.chap+" · "+sug.next.mins+" min read":esc(sug.next.s||"")+" · Foundations, lesson "+(trunkOf(sug.c.id).indexOf(sug.next)+1))}</div></div>
+      <button class="btn block" data-go="lesson:${sug.next.id}">Start lesson</button>
+    </div>`:""}
+    <div class="stack">
+      <div class="spread"><h3>Your paths</h3>${paths.length?`<span class="tag tnum">${paths.length} following</span>`:""}</div>
+      ${paths.length?`<div class="list">${paths.map(id=>{const n=NODE[id],c=CAT[n.cid],d=lessonsUnder(id).filter(l=>S.learned[l.id]).length,open=unlocked(id),b=open?null:blocker(id),nx=open?nextIn(id):null;
+        return `<button class="li sub" style="--h:${c.h}" data-go="node:${id}"><span class="sym">${c.sym}</span><span class="mid"><span class="pathline">${esc(c.name)} › ${esc(crumbNames(id,2))}</span><span class="spread"><span class="t">${esc(n.name)}</span><span class="s tnum">${open?(d?d+" learned":"open"):"locked"}</span></span><span class="s">${open?(nx?"Next: "+esc(nx.t):"Ready to go deeper with a new lesson"):esc(b.text)}</span></span><span class="muted">›</span></button>`}).join("")}</div>`
+      :`<div class="card" style="gap:8px"><p style="margin:0;font-size:14.5px;line-height:1.45">Each subject branches into narrower areas, like History › American History › 20th Century. Follow the branches you want to go deep on and they'll show up here with your next lesson.</p><button class="btn ghost small" style="align-self:flex-start" data-go="cat:history">Explore History's branches</button></div>`}
+    </div>
+    <div class="card">
+      <div class="spread"><h3>Review</h3><span class="tag tnum">${due} due</span></div>
+      ${due?`<p class="lede" style="font-size:16px">${due} question${due===1?"":"s"} from lessons you've learned ${due===1?"is":"are"} ready. Missed questions come back sooner.</p>
+      <button class="btn block" data-go="review:">Start review</button>`
+      :`<p class="lede" style="font-size:16px">${poolFor(null).length?"You're caught up. Questions come back on a schedule as you get them right.":"Nothing to review yet. Each lesson you learn adds three questions here."}</p>`}
+    </div>
+    <div class="stack">
+      <div class="spread"><h3>Your shelves</h3><button class="linkbtn" data-go="tab:learn">All subjects</button></div>
+      <div class="list">${CATS.map(c=>{const n=learnedLessons(c.id).length,r=retention(c.id),fd=c.lessons.filter(l=>S.learned[l.id]).length,bo=branchesOpen(c.id);
+        return `<button class="li sub" style="--h:${c.h}" data-go="cat:${c.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="spread"><span class="t">${esc(c.name)}</span><span class="s tnum">${n} learned${r!=null?" · "+pct(r)+"% retained":""}</span></span><span class="s">${fd<c.lessons.length?`Foundations ${fd} of ${c.lessons.length}`:`${bo} branch${bo===1?"":"es"} open`}</span></span><span class="muted">›</span></button>`}).join("")}</div>
+    </div>
+    ${saved.length?`<div class="stack"><h3>Saved</h3><div class="list">${saved.map(({k,o})=>{const c=CAT[o.cat];
+      return k==="l"?`<button class="li sub" style="--h:${c.h}" data-go="lesson:${o.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="t">${esc(o.t)}</span><span class="s">Lesson · ${esc(c.name)}</span></span><span class="muted">›</span></button>`
+      :`<div class="li sub" style="--h:${c.h};grid-template-columns:auto 1fr"><span class="sym" style="align-self:start">${c.sym}</span><span class="mid"><span class="t">${esc(o.t)}</span><span class="s" style="font-family:var(--read);font-size:15px;color:var(--ink);line-height:1.45">${esc(o.x)}</span><a class="s" href="${wiki(o.src[0])}" target="_blank" rel="noopener">Wikipedia: ${esc(o.src[0])} ↗</a></span></div>`}).join("")}</div></div>`:""}
+    <div class="card" style="gap:8px">
+      <h3>Your progress</h3>
+      <p class="muted" style="margin:0;font-size:14px;line-height:1.45">Move your progress to another copy of Commonplace, or keep a backup. Export copies a code; Import loads one.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost small" id="expP">Export progress</button><button class="btn ghost small" id="impP">Import progress</button></div>
+      <textarea id="pTxt" hidden rows="4" style="width:100%;box-sizing:border-box;font:12px ui-monospace,monospace;border-radius:10px;padding:8px" placeholder="Paste a progress code here"></textarea>
+      <div style="display:flex;gap:8px" id="pRow" hidden><button class="btn small" id="pGo">Load this progress</button><span class="muted" id="pMsg" style="font-size:13px;align-self:center"></span></div>
+    </div>
+    ${inClaude?"":`<div class="card" style="gap:8px">
+      <div class="spread"><h3>Claude helper</h3><span class="tag">${helperCfg()?(sample?"connected":"saved"):"not set up"}</span></div>
+      <p class="muted" style="margin:0;font-size:14px;line-height:1.45">Your helper writes new lessons and facts with Claude, saves them, and keeps your progress in sync across devices. Enter its address and passphrase once on each device.</p>
+      <input id="hUrl" type="url" placeholder="https://commonplace-helper.yourname.workers.dev" value="${esc((helperCfg()||{}).url||"")}" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;font:inherit">
+      <input id="hPass" type="password" placeholder="Passphrase" value="${esc((helperCfg()||{}).pass||"")}" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;font:inherit">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn small" id="hSave">Save and test</button>${helperCfg()?`<button class="btn ghost small" id="hOff">Disconnect</button>`:""}<span class="muted" id="hMsg" style="font-size:13px"></span></div>
+    </div>`}
+  </div>`;
+  const hs=document.getElementById("hSave");
+  if(hs) hs.onclick=async()=>{const m=document.getElementById("hMsg"), h={url:document.getElementById("hUrl").value.trim(),pass:document.getElementById("hPass").value};
+    if(!/^https:\/\//.test(h.url)||!h.pass){m.textContent="Enter the https:// address and the passphrase."; return}
+    m.textContent="Testing…";
+    try{await helperCall(h,"/ping"); localStorage.setItem(HK,JSON.stringify(h)); m.textContent="Connected. Reloading…"; setTimeout(()=>location.reload(),600)}
+    catch(e){m.textContent=e.code==="unauthenticated"?"The passphrase didn't match.":"Couldn't reach the helper: "+(e.message||"check the address.")}};
+  const ho=document.getElementById("hOff");
+  if(ho) ho.onclick=()=>{try{localStorage.removeItem(HK)}catch(e){} location.reload()};
+  const tx=document.getElementById("pTxt"),row=document.getElementById("pRow"),msg=document.getElementById("pMsg");
+  document.getElementById("expP").onclick=async()=>{const code=JSON.stringify(S); tx.hidden=false; row.hidden=true; tx.value=code; tx.select();
+    try{await navigator.clipboard.writeText(code); tx.insertAdjacentHTML("afterend","")}catch(e){}
+    try{const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([code],{type:"application/json"})); a.download="commonplace-progress-"+dayKey()+".json"; a.click()}catch(e){}};
+  document.getElementById("impP").onclick=()=>{tx.hidden=false; row.hidden=false; tx.value=""; msg.textContent=""; tx.focus()};
+  document.getElementById("pGo").onclick=()=>{try{const o=JSON.parse(tx.value.trim()); if(!o||typeof o!=="object"||!o.learned) throw 0;
+      if(!confirmImport()) return; S=Object.assign(blank(),o); S.updated=Date.now(); try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+      if(typeof dirty!=="undefined"){dirty.add("progress"); CATS.forEach(c=>dirty.add("gen-"+c.id)); if(typeof flush==="function") flush()}
+      render();}catch(e){msg.textContent="That code didn't work. Copy the whole thing and try again."}};
+}
+function confirmImport(){const n=Object.keys(S.learned).length; if(!n) return true; const m=document.getElementById("pMsg");
+  if(m.dataset.armed){return true} m.dataset.armed="1"; m.textContent="This replaces your current progress here ("+n+" learned). Tap again to confirm."; return false}
+
+/* ---------- LEARN ---------- */
+function renderLearn(){
+  main.innerHTML=`<div class="wrap">
+    <div class="stack" style="gap:6px"><span class="eyebrow">Should-know foundations</span><h1>Learn</h1>
+    <p class="lede">Every subject starts with its Foundations. Once you know the basics, branches open into narrower areas, and each branch opens the next one down. There's always further to go.</p></div>
+    <div class="tiles">${CATS.map(c=>{const n=learnedLessons(c.id).length,fd=foundationsDone(c.id),bo=branchesOpen(c.id);
+      return `<button class="tile sub" style="--h:${c.h}" data-go="cat:${c.id}" aria-label="${esc(c.name)}, ${n} lessons learned"><span class="n">${String(c.n).padStart(2,"0")}</span><span class="pc tnum">${n?n+" learned":""}</span><span class="S">${c.sym}</span><span class="nm">${esc(c.name)}</span><span class="pathline" style="color:inherit;opacity:.8;font-size:11px">${fd?bo+" branch"+(bo===1?"":"es")+" open":"Foundations"}</span></button>`}).join("")}</div>
+  </div>`;
+}
+let genState={};   // AI lesson job per subject (foundations) or per branch
+const openNodes=new Set(), seededOpen=new Set();
+function foundationsList(cid,nx){
+  const c=CAT[cid], trunk=trunkOf(cid);
+  if(!c.units) return trunk.map((l,i)=>lessonRow(l,i,nx&&nx.id===l.id)).join("");
+  let out="", last=-1;
+  trunk.forEach((l,i)=>{const u=l.unit==null?"more":l.unit; if(u!==last){out+=`<div class="unithead">${u==="more"?"Beyond the course":"Unit "+(u+1)+" · "+esc(c.units[u])}</div>`; last=u} out+=lessonRow(l,i,nx&&nx.id===l.id)});
+  return out;
+}
+function lessonRow(l,i,isNext){
+  const done=!!S.learned[l.id];
+  if(l.sec) l={...l,s:`${l.mins} min · ${l.s||""}`};
+  if(!lessonOpen(l)) return `<div class="li" style="opacity:.55"><span class="num">${LOCK}</span><span class="mid"><span class="t">${esc(l.t)}</span><span class="s">${esc(l.s||"")}</span></span><span></span></div>`;
+  return `<button class="li" data-go="lesson:${l.id}"><span class="num ${done?"done":isNext?"next":""}">${done?"✓":i+1}</span><span class="mid"><span class="t">${esc(l.t)}</span><span class="s">${esc(l.s||"")}${l.ai?" · AI-written, fact-checked":""}</span></span><span class="muted">›</span></button>`;
+}
+function seedOpen(cid){
+  if(seededOpen.has(cid)) return; seededOpen.add(cid);
+  const mark=id=>{let p=NODE[id]&&NODE[id].parent; while(p){openNodes.add(p); p=NODE[p].parent}};
+  lessonsOf(cid).forEach(l=>{if(l.node) mark(l.node)});
+  Object.keys(S.follow).forEach(id=>{if(NODE[id]&&NODE[id].cid===cid){mark(id); openNodes.add(id)}});
+}
+function treeHTML(ids,root){
+  return `<ul class="tree${root?" root":""}">${ids.map(id=>{
+    const n=NODE[id], d=lessonsUnder(id).filter(l=>S.learned[l.id]).length, open=openNodes.has(id), kids=n.children.length, un=unlocked(id);
+    return `<li><div class="trow">${kids?`<button class="tg" data-tg="${id}" aria-expanded="${open}" aria-label="${open?"Collapse":"Expand"} ${esc(n.name)}">›</button>`:`<span class="leaf" aria-hidden="true"></span>`}<button class="tn" data-go="node:${id}" ${un?"":'style="color:var(--muted)"'}><span class="tname">${esc(n.name)}</span>${S.follow[id]?'<span class="tag ok">Following</span>':""}<span class="tcount tnum ${d?"done":""}">${un?(d?d+" learned":""):LOCK}</span></button></div>${kids&&open?treeHTML(n.children):""}</li>`}).join("")}</ul>`;
+}
+function renderCat(cid){
+  const c=CAT[cid], trunk=trunkOf(cid), nx=nextLesson(cid), r=retention(cid), n=learnedLessons(cid).length, fdone=foundationsDone(cid);
+  seedOpen(cid);
+  main.innerHTML=`<div class="wrap sub" style="--h:${c.h}">
+    <button class="back" data-go="tab:learn">‹ All subjects</button>
+    <div class="hero"><div class="big">${c.sym}</div><div class="stack" style="gap:4px;min-width:0"><span class="eyebrow">Subject ${String(c.n).padStart(2,"0")}</span><h1>${esc(c.name)}</h1></div></div>
+    <p class="lede">${esc(c.blurb)}</p>
+    <div class="row muted tnum" style="font-size:14px;gap:14px;flex-wrap:wrap"><span>${n} lesson${n===1?"":"s"} learned</span>${r!=null?`<span>${pct(r)}% retained</span>`:""}${poolFor(cid).length?`<button class="linkbtn" data-go="practice:${cid}">Quiz this subject</button>`:""}</div>
+    <div class="stack"><div class="spread"><h3>Foundations</h3><span class="muted" style="font-size:12.5px">${fdone?"Your base":"Start here"}</span></div>
+      ${c.units?`<p class="muted" style="margin:0;font-size:13.5px">${c.lessons.length} chapters in ${c.units.length} units, about ${Math.round(c.lessons.reduce((s,l)=>s+l.mins,0)/60)} hours of reading. Each chapter has its own quiz.</p>`:""}
+      <div class="list path">${foundationsList(cid,nx)}</div>
+      ${fdone?`<div class="card" id="genLesson">${genLessonCard(cid,null)}</div>`:""}</div>
+    <div class="stack"><div class="spread"><h3>Branches</h3><span class="muted" style="font-size:12.5px">Tap › to expand, a name to enter</span></div>
+      ${fdone?"":`<div class="row muted" style="font-size:13.5px;gap:8px">${LOCK}<span>Branches open once you've learned all ${c.lessons.length} Foundations ${c.units?"chapters":"lessons"} (${c.lessons.filter(l=>S.learned[l.id]).length} done). You can look ahead and follow a path now.</span></div>`}
+      <div class="treebox" id="tree">${treeHTML(ROOTS[cid]||[],true)}</div></div>
+  </div>`;
+  wireGenLesson(cid,null);
+}
+function renderNode(id){
+  const n=NODE[id]; if(!n){go("learn"); return}
+  const c=CAT[n.cid], here=lessonsAt(id), under=lessonsUnder(id), d=under.filter(l=>S.learned[l.id]).length, fol=!!S.follow[id], nx=nextIn(id), un=unlocked(id), b=un?null:blocker(id);
+  const anc=[]; let p=n.parent; while(p){anc.unshift(NODE[p]); p=NODE[p].parent}
+  main.innerHTML=`<div class="wrap sub" style="--h:${c.h}">
+    <button class="back" data-go="${n.parent?"node:"+n.parent:"cat:"+c.id}">‹ ${esc(n.parent?NODE[n.parent].name:c.name)}</button>
+    <div class="stack" style="gap:8px">
+      <div class="crumbs">${chip(c)}${anc.map(a=>`<span class="sep">›</span><button data-go="node:${a.id}">${esc(a.name)}</button>`).join("")}</div>
+      <h1>${esc(n.name)}</h1>
+    </div>
+    <div class="spread" style="flex-wrap:wrap"><span class="muted tnum" style="font-size:14px">${d?`${d} lesson${d===1?"":"s"} learned in this branch`:un?"Open and ready to explore":"Not open yet"}</span>
+      <button class="follow" id="followB" aria-pressed="${fol}">${fol?"✓ Following":"Follow this path"}</button></div>
+    ${b?`<div class="card" style="gap:10px"><div class="row" style="gap:8px;font-weight:600">${LOCK}<span>${esc(b.text)}</span></div>
+      <p class="muted" style="margin:0;font-size:14px">Each branch builds on the one above it, so you'll have the context you need when you get here.</p>
+      ${b.lesson?`<button class="btn small" style="align-self:flex-start" data-go="lesson:${b.lesson.id}">Next step: ${esc(b.lesson.t)}</button>`:b.node?`<button class="btn small" style="align-self:flex-start" data-go="node:${b.node}">Go to ${esc(NODE[b.node].name)}</button>`:""}</div>`:""}
+    ${here.length?`<div class="stack"><h3>${n.children.length?"Overview of this branch":"Lessons"}</h3><div class="list path">${here.map((l,i)=>lessonRow(l,i,nx&&nx.id===l.id)).join("")}</div></div>`:""}
+    ${un?`<div class="card" id="genLesson">${genLessonCard(c.id,id)}</div>`:""}
+    ${n.children.length?`<div class="stack"><h3>Narrower branches</h3>${un&&!hasLearnedAt(id)?`<p class="muted" style="margin:0;font-size:13.5px">These open after you learn a lesson in ${esc(n.name)}.</p>`:""}<div class="list">${n.children.map(k=>{const kn=NODE[k],kd=lessonsUnder(k).filter(l=>S.learned[l.id]).length,ku=unlocked(k);
+      return `<button class="li" data-go="node:${k}"><span class="leaf" aria-hidden="true"></span><span class="mid"><span class="spread"><span class="t" ${ku?"":'style="color:var(--muted)"'}>${esc(kn.name)}</span><span class="s tnum">${ku?(kd?kd+" learned":""):LOCK}</span></span>${kn.children.length?`<span class="s">${kn.children.map(x=>esc(NODE[x].name)).join(" · ")}</span>`:""}</span><span class="muted">›</span></button>`}).join("")}</div></div>`:""}
+  </div>`;
+  $("#followB").onclick=()=>{if(S.follow[id]) delete S.follow[id]; else S.follow[id]=Date.now(); save(); renderNode(id)};
+  wireGenLesson(c.id,id);
+}
+function genLessonCard(cid,nid){
+  const c=CAT[cid], key=nid||cid, st=genState[key], here=nid?lessonsAt(nid):trunkOf(cid), n=here.length+1;
+  const where=nid?NODE[nid].name:"Foundations";
+  const allDone=nid?!lessonsAt(nid).some(l=>!S.learned[l.id]):!nextLesson(cid);
+  if(st&&st.busy) return `<h3>Writing ${esc(where)}, lesson ${n}</h3><div class="gen">${stepsHTML(st)}</div><button class="btn ghost small" id="genStop" style="align-self:flex-start">Stop</button>`;
+  const err=st&&st.err?`<div class="err">${esc(st.err)}</div>`:"";
+  if(!sample) return `<h3>${nid&&!here.length?"First lesson here":"More lessons"}</h3><p class="muted" style="margin:0;font-size:14px">${inClaude?"New lessons are written by Claude. Connecting…":"New lessons are written by Claude through your helper. Connect it once at the bottom of the Today tab."}</p>`;
+  const what=nid?(here.length?`the next thing to know about ${esc(NODE[nid].name)}`:`the first lesson on ${esc(NODE[nid].name)}`+(NODE[nid].children.length?", an overview that ties its narrower branches together":""))
+    :`the next should-know foundation in ${esc(c.name)}`;
+  return `<h3>${esc(where)}, lesson ${n}</h3>
+    <p style="margin:0;font-size:14.5px;line-height:1.45">${here.length&&allDone?"Ready to go deeper. ":""}Claude writes ${what}, building on what you've covered. A second, stricter pass checks every claim and question and drops anything it can't confirm.</p>
+    ${err}<button class="btn ${here.length&&!allDone?"ghost":""} small" id="genGo" style="align-self:flex-start">${here.length?"Write the next lesson":"Write the first lesson"}</button>`;
+}
+function stepsHTML(st){
+  return st.steps.map(s=>`<div class="step ${s.state}"><span class="dot"></span>${esc(s.label)}</div>`).join("");
+}
+function wireGenLesson(cid,nid){
+  const go=$("#genGo"), stop=$("#genStop");
+  if(go) go.onclick=()=>makeLesson(cid,nid);
+  if(stop) stop.onclick=()=>{const s=genState[nid||cid]; if(s&&s.ctl) s.ctl.abort()};
+}
+function paintGen(cid,nid){
+  const s=view.sub; if(!s||!$("#genLesson")) return;
+  if((nid&&s.type==="node"&&s.id===nid)||(!nid&&s.type==="cat"&&s.cid===cid)){$("#genLesson").innerHTML=genLessonCard(cid,nid); wireGenLesson(cid,nid)}
+}
+function refreshAI(){
+  const s=view.sub;
+  if(s&&s.type==="cat") paintGen(s.cid,null);
+  if(s&&s.type==="node") paintGen(NODE[s.id].cid,s.id);
+  if(view.tab==="discover"&&!view.sub&&$("#feedEnd")) fillEnd();
+}
+
+/* ---------- LESSON ---------- */
+function renderLesson(id){
+  const l=findLesson(id);
+  if(!l){go("learn"); return}
+  if(!lessonOpen(l)){go("learn",{type:"node",id:l.node}); return}
+  const c=CAT[l.cat], done=!!S.learned[l.id], saved=!!S.saved[l.id];
+  const idx=(l.node?lessonsAt(l.node):trunkOf(l.cat)).indexOf(l)+1;
+  const nx=l.node?nextIn(l.node):nextLesson(l.cat);
+  const pos=l.sec?readPos(l.id):0;
+  main.innerHTML=`<div class="wrap sub" style="--h:${c.h}">
+    ${l.sec?'<div class="readbar" aria-hidden="true"><i id="readbar"></i></div>':""}
+    ${pos>400?`<button class="btn small resume" id="resumeB">Resume where you left off</button>`:""}
+    <div class="spread"><button class="back" data-go="${l.node?"node:"+l.node:"cat:"+c.id}">‹ ${esc(l.node?NODE[l.node].name:c.name)}</button>
+      <button class="save" id="saveL" aria-pressed="${saved}">${BOOK}${saved?"Saved":"Save"}</button></div>
+    <div class="stack" style="gap:8px">
+      <div class="row" style="flex-wrap:wrap">${chip(c)}<span class="eyebrow">${l.node?"Branch lesson "+idx:l.sec?"Unit "+(l.unit+1)+" · Chapter "+l.chap+" · "+l.mins+" min read":"Foundations · Lesson "+idx}</span>${l.ai?'<span class="tag ok">Fact-checked</span>':""}</div>
+      ${l.node?`<div class="pathline" style="white-space:normal">${esc(crumbNames(l.node))}</div>`:""}
+      <h1>${esc(l.t)}</h1>${l.s?`<p class="lede">${esc(l.s)}</p>`:""}
+    </div>
+    ${l.sec?`<div class="card" style="gap:6px"><h3>In this chapter</h3><ol class="toc">${l.sec.map((x,i)=>`<li><button data-sec="${i}">${esc(x[0])}</button></li>`).join("")}</ol></div>
+    <div class="chapter">${l.sec.map((x,i)=>`<section id="sec${i}"><h2>${esc(x[0])}</h2>${x[1].map(t=>`<p>${esc(t)}</p>`).join("")}</section>`).join("")}</div>
+    ${l.terms?`<div class="card"><h3>Key terms</h3><dl class="terms">${l.terms.map(t=>`<div><dt>${esc(t[0])}</dt><dd>${esc(t[1])}</dd></div>`).join("")}</dl></div>`:""}`
+    :`<ul class="points">${l.p.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>`}
+    ${l.w?`<div class="stack" style="gap:6px"><h3>Why it matters</h3><div class="why">${esc(l.w)}</div></div>`:""}
+    <div class="stack" style="gap:8px"><h3>Check the sources</h3>${sourcesHTML(l.src)}
+      ${l.ai?`<div class="check"><span>✓</span><span>Written by Claude, then independently fact-checked: ${l.checked.passed} of ${l.checked.total} claims and questions confirmed. Anything unconfirmed was removed before you saw it.</span></div>`:'<span class="muted" style="font-size:13px">Part of the curated starter library.</span>'}
+    </div>
+    <div class="card" id="learnBox">${done?learnedBox(l,nx):`<button class="btn block" id="markL">Mark as learned</button><span class="muted" style="font-size:13px;text-align:center">Adds ${l.q.length} questions to your review</span>`}</div>
+    ${l.ai?`<div id="rmBox"><button class="linkbtn" id="rmL" style="color:var(--muted);font-weight:500;font-size:13px">Spotted an error? Remove this lesson</button></div>`:""}
+  </div>`;
+  $("#saveL").onclick=e=>{toggleSave(l.id); const on=!!S.saved[l.id]; e.currentTarget.setAttribute("aria-pressed",on); e.currentTarget.innerHTML=BOOK+(on?"Saved":"Save")};
+  const m=$("#markL"); if(m) m.onclick=()=>{S.learned[l.id]=Date.now(); bump("l"); save(); const st=main.scrollTop; renderLesson(id); main.scrollTop=st; savePos(l.id,0)};
+  main.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>{const t=$("#sec"+b.dataset.sec); if(t) t.scrollIntoView({behavior:"smooth"})});
+  const rb=$("#resumeB"); if(rb) rb.onclick=()=>{main.scrollTo({top:pos,behavior:"smooth"}); rb.remove()};
+  readingId=l.sec?l.id:null; renderedAt=Date.now(); requestAnimationFrame(onRead);
+  const rm=$("#rmL"); if(rm) rm.onclick=()=>{
+    $("#rmBox").innerHTML=`<div class="card"><p style="margin:0;font-size:14px">Remove “${esc(l.t)}” and its questions? Claude can write a replacement.</p><div class="row"><button class="btn small" id="rmYes">Remove</button><button class="btn ghost small" id="rmNo">Keep</button></div></div>`;
+    $("#rmNo").onclick=()=>renderLesson(id);
+    $("#rmYes").onclick=()=>{const g=gen(l.cat); g.lessons=g.lessons.filter(x=>x.id!==l.id); delete S.learned[l.id]; delete S.saved[l.id];
+      Object.keys(S.quiz).forEach(k=>{if(k.startsWith(l.id+"#")) delete S.quiz[k]}); save(l.cat); go("learn",l.node?{type:"node",id:l.node}:{type:"cat",cid:l.cat})};
+  };
+}
+/* Reading place for long chapters: kept in this browser only */
+const RP="commonplace.readpos"; let readingId=null, rpTimer=null, renderedAt=0;
+function readPos(id){try{return (JSON.parse(localStorage.getItem(RP)||"{}")[id])||0}catch(e){return 0}}
+function savePos(id,y){try{const o=JSON.parse(localStorage.getItem(RP)||"{}"); if(y>0) o[id]=Math.round(y); else delete o[id]; localStorage.setItem(RP,JSON.stringify(o))}catch(e){}}
+function onRead(){
+  const bar=$("#readbar"); if(!readingId||!bar) return;
+  const max=main.scrollHeight-main.clientHeight; bar.style.width=(max>0?Math.min(100,main.scrollTop/max*100):0)+"%";
+  const r=$("#resumeB"); if(r&&Date.now()-renderedAt>800&&main.scrollTop>200) r.remove();
+  clearTimeout(rpTimer); const id=readingId, y=main.scrollTop; if(y>0) rpTimer=setTimeout(()=>{if(!S.learned[id]) savePos(id,y)},400);
+}
+main.addEventListener("scroll",()=>{if(readingId) onRead()},{passive:true});
+function learnedBox(l,nx){
+  return `<div class="row" style="color:var(--good);font-weight:600"><span>✓</span><span>Learned. ${l.q.length} questions are in your review.</span></div>
+    <div class="row" style="flex-wrap:wrap"><button class="btn small" data-go="practice:${l.cat}">Quiz ${esc(CAT[l.cat].name)}</button>${nx?`<button class="btn ghost small" data-go="lesson:${nx.id}">Next: ${esc(nx.t)}</button>`:l.node?`<button class="btn ghost small" data-go="node:${l.node}">Back to ${esc(NODE[l.node].name)}</button>`:`<button class="btn ghost small" data-go="cat:${l.cat}">Explore ${esc(CAT[l.cat].name)}'s branches</button>`}</div>`;
+}
+function toggleSave(id){if(S.saved[id]) delete S.saved[id]; else S.saved[id]=Date.now(); save()}
+
+/* ---------- QUIZ ---------- */
+function renderQuiz(){
+  const all=poolFor(null), due=all.filter(q=>isDue(q)).length;
+  const cats=CATS.filter(c=>learnedLessons(c.id).length);
+  main.innerHTML=`<div class="wrap">
+    <div class="stack" style="gap:6px"><span class="eyebrow">Spaced review</span><h1>Quiz</h1>
+    <p class="lede">Questions come only from lessons you've learned. Miss one and it returns soon. Get it right and it waits longer: 1, 3, 7, 16, then 35 days.</p></div>
+    ${all.length?`<div class="card">
+      <div class="spread"><h3>All subjects</h3><span class="tag tnum">${due} due</span></div>
+      <div class="stack" style="gap:4px"><div class="score tnum">${pct(retention(null))}%</div><span class="muted tnum" style="font-size:14px">retained across ${all.length} question${all.length===1?"":"s"}</span></div>
+      ${due?`<button class="btn block" data-go="review:">Review ${Math.min(SESSION,due)} due question${Math.min(SESSION,due)===1?"":"s"}</button>`:`<button class="btn ghost block" data-go="practice:">Nothing due. Practice anyway</button>`}
+    </div>
+    <div class="stack"><h3>By subject</h3><div class="list">${cats.map(c=>{const p=poolFor(c.id),d=p.filter(q=>isDue(q)).length,r=retention(c.id);
+      return `<button class="li sub" style="--h:${c.h}" data-go="${d?"review":"practice"}:${c.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="spread"><span class="t">${esc(c.name)}</span><span class="s tnum">${d} due · ${pct(r)}%</span></span><span class="bar"><i style="width:${pct(r)}%"></i></span></span><span class="muted">›</span></button>`}).join("")}</div>
+      ${cats.length<CATS.length?`<p class="muted" style="font-size:13px;margin:0">${CATS.length-cats.length} subject${CATS.length-cats.length===1?"":"s"} will appear here once you learn a lesson in them.</p>`:""}</div>`
+    :`<div class="card"><h2>Nothing to test yet</h2><p class="lede" style="font-size:16px">Learn your first lesson and its three questions land here, scheduled so they come back right before you'd forget them.</p><button class="btn block" data-go="tab:learn">Pick a subject</button></div>`}
+  </div>`;
+}
+let session=null;
+function startSession(cid,practice){
+  const now=Date.now(), pool=poolFor(cid);
+  if(!pool.length){go("learn"); return}
+  const box=q=>(S.quiz[q.id]||{}).b||0;
+  let picks=pool.filter(q=>isDue(q,now));
+  if(!picks.length||practice) picks=pool.slice();
+  picks=shuffle(picks).sort((a,b)=>box(a)-box(b)).slice(0,SESSION);
+  session={cid,items:shuffle(picks).map(q=>({q,opts:shuffle([q.a,...q.w]),pick:null})),i:0,right:0};
+  go(view.tab==="today"?"today":"quiz",{type:"session"});
+}
+function renderSession(){
+  const s=session; if(!s){go("quiz"); return}
+  if(s.i>=s.items.length) return renderSummary();
+  const it=s.items[s.i], q=it.q, c=CAT[q.lesson.cat], answered=it.pick!=null;
+  const back=view.tab==="today"?"tab:today":"tab:quiz";
+  main.innerHTML=`<div class="wrap sub" style="--h:${c.h}">
+    <div class="spread"><button class="back" data-go="${back}">‹ End</button><span class="counter tnum">${s.i+1} of ${s.items.length}</span></div>
+    <div class="pips">${s.items.map((x,i)=>`<i class="${x.pick==null?(i===s.i?"c":""):(x.pick===x.q.a?"r":"w")}"></i>`).join("")}</div>
+    <div class="row">${chip(c)}</div>
+    <p class="qtext">${esc(q.q)}</p>
+    <div class="choices">${it.opts.map((o,i)=>{let cls=""; if(answered){if(o===q.a) cls="right"; else if(o===it.pick) cls="wrong"}
+      return `<button class="choice ${cls}" data-i="${i}" ${answered?"disabled":""}><span class="k">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`}).join("")}</div>
+    ${answered?`<div class="card" style="gap:10px">
+      <div style="font-weight:650;color:${it.pick===q.a?"var(--good)":"var(--bad)"}">${it.pick===q.a?"Correct.":"Not quite. The answer is "+esc(q.a)+"."}</div>
+      <div class="muted" style="font-size:13.5px">From <button class="linkbtn" data-go="lesson:${q.lesson.id}" style="font-size:13.5px">${esc(q.lesson.t)}</button>. ${it.pick===q.a?"Next review in "+INTERVALS[(S.quiz[q.id]||{}).b||0]+" day"+(INTERVALS[(S.quiz[q.id]||{}).b||0]===1?"":"s")+".":"It will come back in your next review."}</div>
+      <button class="btn block" id="nextQ">${s.i+1<s.items.length?"Next question":"See results"}</button></div>`:""}
+  </div>`;
+  main.querySelectorAll(".choice").forEach(b=>b.onclick=()=>answer(it.opts[+b.dataset.i]));
+  const n=$("#nextQ"); if(n){n.onclick=()=>{s.i++; render(true)}; n.focus({preventScroll:true})}
+}
+function answer(opt){
+  const s=session, it=s.items[s.i]; if(it.pick!=null) return;
+  it.pick=opt;
+  const r=S.quiz[it.q.id]||{b:0,d:0,r:0,w:0}, ok=opt===it.q.a;
+  if(ok){r.b=Math.min(5,r.b+1); r.r++; s.right++; r.d=Date.now()+INTERVALS[r.b]*DAY}
+  else{r.b=0; r.w++; r.d=Date.now()+10*60*1000}
+  S.quiz[it.q.id]=r; bump("q"); save(); renderSession();
+}
+function renderSummary(){
+  const s=session, n=s.items.length, missed=s.items.filter(x=>x.pick!==x.q.a);
+  const back=view.tab==="today"?"tab:today":"tab:quiz";
+  main.innerHTML=`<div class="wrap">
+    <span class="eyebrow">Review complete</span>
+    <div class="score tnum">${s.right}/${n}</div>
+    <p class="lede">${s.right===n?"A clean sweep. These questions now wait longer before they return.":missed.length===1?"One to revisit. It comes back in your next review.":missed.length+" to revisit. They come back in your next review."}</p>
+    ${missed.length?`<div class="stack"><h3>Revisit</h3><div class="list">${missed.map(x=>{const c=CAT[x.q.lesson.cat];
+      return `<button class="li sub" style="--h:${c.h}" data-go="lesson:${x.q.lesson.id}"><span class="sym">${c.sym}</span><span class="mid"><span class="t" style="font-weight:500">${esc(x.q.q)}</span><span class="s">Answer: ${esc(x.q.a)}</span></span><span class="muted">›</span></button>`}).join("")}</div></div>`:""}
+    <div class="row" style="flex-wrap:wrap"><button class="btn" id="again">Another round</button><button class="btn ghost" data-go="${back}">Done</button></div>
+  </div>`;
+  $("#again").onclick=()=>startSession(s.cid,true);
+}
+
+/* ---------- DISCOVER ---------- */
+let filter="all", deck=[], factJob=null;
+function buildDeck(){
+  const cats=filter==="all"?CATS.map(c=>c.id):[filter];
+  deck=shuffle(cats.flatMap(cid=>factsOf(cid).filter(f=>!S.seen[f.id])));
+}
+function factCard(f,first){
+  const c=CAT[f.cat], saved=!!S.saved[f.id];
+  return `<section class="fcard sub" style="--h:${c.h}" data-id="${f.id}"><div class="fin">
+    <div class="spread">${chip(c)}${f.ai?'<span class="tag ok">Fact-checked</span>':'<span class="tag">Curated</span>'}</div>
+    <h2>${esc(f.t)}</h2><p>${esc(f.x)}</p>
+    <div class="foot"><div class="spread"><a class="src" href="${wiki(f.src[0])}" target="_blank" rel="noopener">Source: Wikipedia, ${esc(f.src[0])} ↗</a>
+      <button class="save" data-save="${f.id}" aria-pressed="${saved}">${BOOK}${saved?"Saved":"Save"}</button></div>
+      ${first?'<div class="hint">Swipe up for the next one</div>':""}</div></div></section>`;
+}
+function renderDiscover(){
+  buildDeck();
+  main.innerHTML=`<div class="feedwrap">
+    <div class="filters" role="toolbar" aria-label="Filter by subject">
+      <button data-f="all" aria-pressed="${filter==="all"}">All</button>${CATS.map(c=>`<button data-f="${c.id}" aria-pressed="${filter===c.id}">${esc(c.name)}</button>`).join("")}
+    </div>
+    <div class="feed" id="feed">${deck.map((f,i)=>factCard(f,i===0)).join("")}<section class="fcard"><div class="fin" id="feedEnd"></div></section></div>
+  </div>`;
+  fillEnd();
+  main.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{filter=b.dataset.f; render()});
+  const feed=$("#feed");
+  feed.addEventListener("click",e=>{const b=e.target.closest("[data-save]"); if(!b) return; toggleSave(b.dataset.save); const on=!!S.saved[b.dataset.save]; b.setAttribute("aria-pressed",on); b.innerHTML=BOOK+(on?"Saved":"Save")});
+  observeCards(feed);
+}
+function observeCards(feed){
+  const timers=new Map();
+  feedObserver=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      const id=en.target.dataset.id; if(!id) return;
+      if(en.isIntersecting&&!S.seen[id]&&!timers.has(id)) timers.set(id,setTimeout(()=>{S.seen[id]=Date.now(); bump("f"); save(); timers.delete(id)},1500));
+      else if(!en.isIntersecting&&timers.has(id)){clearTimeout(timers.get(id)); timers.delete(id)}
+    });
+  },{root:feed,threshold:.6});
+  feed.querySelectorAll(".fcard[data-id]").forEach(el=>feedObserver.observe(el));
+}
+function fillEnd(){
+  const el=$("#feedEnd"); if(!el) return;
+  const scope=filter==="all"?"every subject":CAT[filter].name;
+  if(factJob&&factJob.busy){el.innerHTML=`<h3>Finding new facts</h3><div class="gen">${stepsHTML(factJob)}</div><button class="btn ghost small" id="fStop" style="align-self:flex-start">Stop</button>`;
+    $("#fStop").onclick=()=>factJob.ctl&&factJob.ctl.abort(); return}
+  const err=factJob&&factJob.err?`<div class="err">${esc(factJob.err)}</div>`:"";
+  el.innerHTML=`<div style="margin-top:auto" class="stack">
+    <span class="eyebrow">${deck.length?"End of the stack":"Nothing new here"}</span>
+    <h2 style="margin:0">You're caught up on ${esc(scope)} for now.</h2>
+    <p class="lede" style="font-size:17px">Facts you've scrolled past don't come back. ${sample?"Claude can find five more, and a second fact-checking pass drops any it can't confirm.":"Connect your Claude helper at the bottom of the Today tab to find new, fact-checked ones."}</p>
+    ${err}${sample?`<button class="btn" id="moreFacts">Find 5 new facts</button>`:""}
+    <button class="btn ghost" data-go="tab:learn">Go learn something</button></div>`;
+  const b=$("#moreFacts"); if(b) b.onclick=makeFacts;
+}
+
+/* ---------- AI: write, then fact-check ---------- */
+const RULES=`Accuracy rules (strict):
+- Use only facts that are well established and documented in mainstream reference works: Encyclopaedia Britannica, well-cited English Wikipedia articles, standard university textbooks, official institutions.
+- Never present legends, anecdotes, or disputed claims as fact. If something is traditional but unproven, leave it out.
+- Use approximate figures ("about", "roughly") unless you are certain of an exact figure. Use only dates historians agree on.
+- For each claim give the exact title of an English Wikipedia article where a reader can verify it.
+- Write in plain, clear English for an adult general reader. No markdown.`;
+function checkPrompt(items){
+  return `You are a strict, skeptical fact-checker for an educational app. Check each item independently against what is documented in reliable references (Encyclopaedia Britannica, well-cited Wikipedia articles, scholarly consensus).
+Mark an item "verified" only if every part of it, including names, dates, and numbers, is accurate as written and not misleading.
+Mark "uncertain" if any part is disputed, legendary, overly precise, or you are not confident.
+Mark "false" if any part is wrong.
+For quiz items (ids starting with Q), mark "verified" only if the stated answer is correct, every wrong option is actually wrong, and the question has exactly one defensible answer.
+
+${items.map(x=>x.id+": "+x.text).join("\n")}
+
+Reply with only JSON: {"items":[{"id":"C1","verdict":"verified","note":"short reason"}]}`;
+}
+function verdicts(res){const m={}; ((res&&res.items)||[]).forEach(x=>{if(x&&x.id) m[String(x.id).trim()]=String(x.verdict||"").toLowerCase().trim()}); return m}
+const str=(x,max=600)=>typeof x==="string"?x.trim().slice(0,max):"";
+
+async function makeLesson(cid,nid){
+  const c=CAT[cid], key=nid||cid, node=nid?NODE[nid]:null;
+  const ls=node?lessonsAt(nid):trunkOf(cid);
+  const others=lessonsOf(cid).filter(l=>!ls.includes(l)).map(l=>l.t).slice(-80);
+  const level=node?"specialized: go one step deeper than the lessons already in this branch, assuming the learner knows the subject's foundations and the broader branches above this one"
+    :ls.length<8?"foundational: core knowledge every educated adult should have":ls.length<16?"intermediate: still essential, building on the foundations":"advanced but still widely referenced: the next layer a well-read person knows";
+  const st=genState[key]={busy:true,ctl:new AbortController(),steps:[{label:"Writing the lesson",state:"on"},{label:"Fact-checking every claim and question",state:""},{label:"Adding it to your path",state:""}]};
+  const paint=()=>paintGen(cid,nid);
+  paint();
+  try{
+    const scope=node?`Subject: ${c.name}. Branch: ${c.name} › ${node.path.join(" › ")}.${node.children.length?` This branch splits into narrower branches: ${node.children.map(k=>NODE[k].name).join(", ")}.`:""}
+Lessons already in this branch, in order:
+${ls.length?ls.map((l,i)=>`${i+1}. ${l.t}: ${l.s||""}`).join("\n"):"(none yet)"}
+Other lessons the learner has in ${c.name} (do not repeat these topics):
+${others.join("; ")}
+
+Write lesson ${ls.length+1} of this branch: ${ls.length?`the next thing a well-informed person going deeper into ${node.name} should know`:`an introduction to ${node.name}`+(node.children.length?" that gives an overview of the whole branch and how its narrower branches fit together":"")}. Stay inside this branch. It must not repeat any topic or fact above. Level: ${level}.`
+    :`Subject: ${c.name}.
+The learner has already studied these foundation lessons in this subject, in order:
+${ls.map((l,i)=>`${i+1}. ${l.t}: ${l.s||""}`).join("\n")}
+
+Write foundation lesson ${ls.length+1}: the next topic a well-informed adult is expected to know in ${c.name} ("should-know" knowledge). It must not repeat any topic or fact above. Build on what they already know. Level: ${level}.`;
+    const prompt=`You write lessons for Commonplace, a learning app that replaces mindless social media scrolling with real knowledge.
+${scope}
+
+${RULES}
+
+Reply with only JSON in this shape:
+{"title":"short title","subtitle":"one short line of context","points":[{"text":"one or two sentences","ref":"English Wikipedia article title"}],"why":"one or two sentences on why this matters","quiz":[{"q":"question","answer":"correct answer","wrong":["wrong answer","wrong answer","wrong answer"]}]}
+Give exactly 5 points and 4 quiz questions. Every quiz question must be answerable from the points and have exactly one correct answer; wrong answers should be plausible but clearly wrong.`;
+    const d=await sample.json(prompt,{signal:st.ctl.signal,cache:false});
+    const points=(Array.isArray(d&&d.points)?d.points:[]).map(p=>({text:str(p&&p.text),ref:str(p&&p.ref,150)})).filter(p=>p.text);
+    const quiz=(Array.isArray(d&&d.quiz)?d.quiz:[]).map(q=>({q:str(q&&q.q,300),a:str(q&&q.answer,200),w:(Array.isArray(q&&q.wrong)?q.wrong:[]).map(x=>str(x,200)).filter(Boolean).slice(0,3)})).filter(q=>q.q&&q.a&&q.w.length===3);
+    if(!str(d&&d.title)||points.length<3||quiz.length<2) throw {message:"The draft lesson was incomplete, so it was discarded. Try again."};
+    st.steps[0].state="ok"; st.steps[1].state="on"; paint();
+    const items=[...points.map((p,i)=>({id:"C"+(i+1),text:p.text})),...quiz.map((q,i)=>({id:"Q"+(i+1),text:`${q.q} | stated answer: ${q.a} | wrong options: ${q.w.join("; ")}`}))];
+    const v=verdicts(await sample.json(checkPrompt(items),{signal:st.ctl.signal,cache:false,modelTier:"complex"}));
+    const okP=points.filter((p,i)=>v["C"+(i+1)]==="verified"), okQ=quiz.filter((q,i)=>v["Q"+(i+1)]==="verified");
+    if(okP.length<3||okQ.length<2) throw {message:`The fact-checker could confirm only ${okP.length} of ${points.length} claims and ${okQ.length} of ${quiz.length} questions, so this lesson was discarded. Try again for a different draft.`};
+    st.steps[1].state="ok"; st.steps[2].state="on"; paint();
+    const refs=[...new Set(okP.map(p=>p.ref).filter(Boolean))].slice(0,5);
+    const lesson={id:cid+"-g"+Date.now().toString(36),cat:cid,node:nid||null,t:str(d.title,120),s:str(d.subtitle,160),p:okP.map(p=>p.text),w:str(d.why)||"",
+      src:refs.length?refs:[c.name],q:okQ.slice(0,3).map(q=>[q.q,q.a,...q.w]),ai:true,checked:{passed:okP.length+okQ.length,total:points.length+quiz.length},created:Date.now()};
+    gen(cid).lessons.push(lesson); save(cid);
+    genState[key]=null;
+    const cur=view.sub;
+    if(cur&&((nid&&cur.type==="node"&&cur.id===nid)||(!nid&&cur.type==="cat"&&cur.cid===cid))) go("learn",{type:"lesson",id:lesson.id});
+  }catch(e){
+    genState[key]={busy:false,err:aiErr(e)}; paint();
+  }
+}
+
+async function makeFacts(){
+  const cats=filter==="all"?CATS:[CAT[filter]];
+  const job=factJob={busy:true,ctl:new AbortController(),steps:[{label:"Finding lesser-known facts",state:"on"},{label:"Fact-checking each one",state:""}]};
+  fillEnd();
+  try{
+    const known=cats.map(c=>`${c.id} (${c.name}): ${factsOf(c.id).map(f=>f.t).join("; ")}`).join("\n");
+    const prompt=`You write "did you know" cards for Commonplace, a learning app that replaces mindless scrolling. Write 5 surprising, lesser-known, TRUE facts${cats.length>1?" spread across different subjects from this list":" about "+cats[0].name}. Each should be genuinely interesting: an unusual story, a surprising number, a myth corrected, or a closer look at one specific corner of the subject.
+Subjects (id and name) and facts already shown, which you must not repeat or closely paraphrase:
+${known}
+
+${RULES}
+
+Reply with only JSON: {"facts":[{"category":"subject id from the list","title":"headline of at most 7 words","text":"2 or 3 sentences","ref":"English Wikipedia article title"}]}`;
+    const d=await sample.json(prompt,{signal:job.ctl.signal,cache:false});
+    const ids=cats.map(c=>c.id);
+    const fs=(Array.isArray(d&&d.facts)?d.facts:[]).map(f=>({cat:ids.includes(str(f&&f.category,40))?str(f.category,40):ids[0],t:str(f&&f.title,90),x:str(f&&f.text,700),ref:str(f&&f.ref,150)})).filter(f=>f.t&&f.x);
+    if(!fs.length) throw {message:"No usable facts came back. Try again."};
+    job.steps[0].state="ok"; job.steps[1].state="on"; fillEnd();
+    const v=verdicts(await sample.json(checkPrompt(fs.map((f,i)=>({id:"C"+(i+1),text:f.t+". "+f.x}))),{signal:job.ctl.signal,cache:false,modelTier:"complex"}));
+    const ok=fs.filter((f,i)=>v["C"+(i+1)]==="verified");
+    const stamp=Date.now().toString(36);
+    const added=ok.map((f,i)=>({id:f.cat+"-h"+stamp+i,cat:f.cat,t:f.t,x:f.x,src:[f.ref||CAT[f.cat].name],ai:true,checked:{passed:ok.length,total:fs.length}}));
+    added.forEach(f=>gen(f.cat).facts.push(f));
+    [...new Set(added.map(f=>f.cat))].forEach(cid=>save(cid));
+    factJob=added.length?null:{busy:false,err:`The fact-checker couldn't confirm any of the ${fs.length} facts, so none were added. Try again.`};
+    if(view.tab==="discover"&&!view.sub){
+      if(!added.length){fillEnd(); return}
+      const feed=$("#feed"), end=$("#feedEnd").parentElement;
+      added.forEach(f=>{deck.push(f); end.insertAdjacentHTML("beforebegin",factCard(f,false))});
+      feed.querySelectorAll(".fcard[data-id]").forEach(el=>feedObserver&&feedObserver.observe(el));
+      fillEnd();
+      const first=feed.querySelector(`[data-id="${added[0].id}"]`); if(first) first.scrollIntoView({behavior:"smooth"});
+    }
+  }catch(e){
+    factJob={busy:false,err:aiErr(e)}; fillEnd();
+  }
+}
+
+render(true);
+</script>
