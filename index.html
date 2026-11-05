@@ -47,7 +47,7 @@ a{color:var(--accent)}
 .wrap{max-width:600px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:18px 28px;display:flex;flex-direction:column;gap:18px}
 
 /* tab bar */
-#nav{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-left:max(8px, env(safe-area-inset-left, 0px));padding-right:max(8px, env(safe-area-inset-right, 0px))}
+#nav{flex:none;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-left:max(8px, env(safe-area-inset-left, 0px));padding-right:max(8px, env(safe-area-inset-right, 0px))}
 #nav button{background:none;border:0;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;letter-spacing:.02em;color:var(--muted)}
 #nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #nav button[aria-current="page"]{color:var(--accent);font-weight:600}
@@ -204,6 +204,35 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
 .terms dt{font-weight:650;font-size:15px}
 .terms dd{margin:2px 0 0;font-family:var(--read);font-size:16.5px;line-height:1.45;color:var(--muted)}
 .resume{position:sticky;top:10px;z-index:6;align-self:center}
+/* leisure */
+.hist{display:flex;flex-direction:column}
+.hist .ev{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.hist .ev:first-child{border-top:0;padding-top:4px}
+.hist .yr{font-family:var(--mono);font-size:12px;color:hsl(var(--h) var(--cink-s) var(--cink-l));background:hsl(var(--h) var(--chip-s) var(--chip-l));border-radius:6px;padding:3px 7px;align-self:start;min-width:52px;text-align:center}
+.hist .ev b{font-size:15.5px;line-height:1.3}
+.hist .ev p{font-family:var(--read);font-size:16.5px;line-height:1.5;margin:4px 0 6px}
+.hist .ev a{font-size:12.5px}
+.guess{display:flex;gap:8px}
+.guess input{flex:1;min-width:0;padding:11px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
+.slots{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:slot}
+.slots li{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;padding:9px 12px;border-radius:10px;background:var(--sunk);min-height:42px}
+.slots li::before{counter-increment:slot;content:counter(slot);font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:3px}
+.slots li.got{background:var(--good-bg);color:var(--good)}
+.slots li.miss{background:var(--bad-bg);color:var(--bad)}
+.slots li.flash{animation:flash .6s ease-out}
+@keyframes flash{0%{transform:scale(1.03)}100%{transform:none}}
+.slots .nm{font-weight:650;font-size:15px}
+.slots .dt{font-size:12.5px;opacity:.85;margin-top:1px}
+.words{display:flex;flex-direction:column}
+.word{padding:14px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
+.word:first-of-type{border-top:0;padding-top:2px}
+.word .w{font-size:23px;font-weight:700;letter-spacing:-.01em}
+.word .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.word .def{font-family:var(--read);font-size:17px;line-height:1.45}
+.word .plain{font-size:13.5px;color:var(--muted)}
+.word .ex{font-family:var(--read);font-style:italic;font-size:16.5px;line-height:1.45;border-left:3px solid var(--accent);padding-left:12px}
+.word .or{font-size:12.5px;color:var(--muted)}
+.lvl{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-top:10px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -216,6 +245,7 @@ h3{font-size:13px;margin:0;font-family:var(--mono);font-weight:500;letter-spacin
     <button data-tab="learn"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.7 3.7 4 4.5 4H10c1.1 0 2 .9 2 2v14c0-1.1-.9-2-2-2H4.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M21 5.5c0-.8-.7-1.5-1.5-1.5H14c-1.1 0-2 .9-2 2v14c0-1.1.9-2 2-2h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg>Learn</button>
     <button data-tab="quiz"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.5l2.7 2.7L16.5 9"/></svg>Quiz</button>
     <button data-tab="discover"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Discover</button>
+    <button data-tab="leisure"><svg viewBox="0 0 24 24"><path d="M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H16.5"/><path d="M8 3.5c-.8 1 .8 2 0 3M12 3.5c-.8 1 .8 2 0 3"/></svg>Leisure</button>
   </nav>
 </div>
 
@@ -32613,7 +32643,7 @@ after(11,"Upsets, Miracles, and Unforgettable Moments",
 
 
 /* ---------- constants ---------- */
-const TABS=["today","learn","quiz","discover"];
+const TABS=["today","learn","quiz","discover","leisure"];
 const INTERVALS=[0,1,3,7,16,35];          // days until the next review, by box (0 = new or missed)
 const DAY=864e5;
 const GOALS={l:1,q:6,f:10};
@@ -32763,6 +32793,7 @@ const inClaude=!!(window.claude&&window.claude.use);
   }
   if(!d||!id) return;
   db=d; base="data/users/"+id;
+  setTimeout(()=>loadLeisure(),0);
   try{
     const snap=await db.doc(base+"/progress").get();
     if(snap.exists){
@@ -32798,6 +32829,7 @@ function sourcesHTML(list){return `<div class="sources">${list.map(t=>`<a href="
 function aiErr(e){
   const c=e&&e.code;
   if(c==="cancelled") return "";
+  if(!inClaude&&e&&e.message) return e.message;
   if(c==="not_granted") return "Claude access was declined for this page. You can allow it from the page's permissions menu, then try again.";
   if(c==="rate_limited") return "You've reached a Claude usage limit. Try again a little later.";
   if(c==="invalid_json") return "The answer came back in an unreadable format. Try again.";
@@ -32825,7 +32857,7 @@ function render(top){
   else if(s&&s.type==="node") renderNode(s.id);
   else if(s&&s.type==="lesson") renderLesson(s.id);
   else if(s&&s.type==="session") renderSession();
-  else ({today:renderToday,learn:renderLearn,quiz:renderQuiz,discover:renderDiscover})[view.tab]();
+  else ({today:renderToday,learn:renderLearn,quiz:renderQuiz,discover:renderDiscover,leisure:renderLeisure})[view.tab]();
   if(top) main.scrollTop=0;
 }
 main.addEventListener("click",e=>{
@@ -33036,6 +33068,7 @@ function refreshAI(){
   if(s&&s.type==="cat") paintGen(s.cid,null);
   if(s&&s.type==="node") paintGen(NODE[s.id].cid,s.id);
   if(view.tab==="discover"&&!view.sub&&$("#feedEnd")) fillEnd();
+  if(view.tab==="leisure"&&!view.sub) renderLeisure();
 }
 
 /* ---------- LESSON ---------- */
@@ -33332,6 +33365,270 @@ Reply with only JSON: {"facts":[{"category":"subject id from the list","title":"
   }catch(e){
     factJob={busy:false,err:aiErr(e)}; fillEnd();
   }
+}
+
+/* ---------- LEISURE: This Day in History, the daily challenge, and vocabulary ----------
+   Everything here is written by Claude through the helper, fact-checked, and kept per day
+   (in this browser and in the helper's store, so every device sees the same day). */
+const LZ="commonplace.leisure";
+let LZD={days:{},past:{chal:[],words:[]},updated:0};
+try{const r=localStorage.getItem(LZ); if(r) LZD=Object.assign(LZD,JSON.parse(r))}catch(e){}
+let lzLoaded=false, lzTimer=null;
+const lzJob={hist:null,chal:null,vocab:null};
+const lzTried={};
+function lzToday(){const k=dayKey(); return LZD.days[k]||(LZD.days[k]={})}
+function lzSave(){
+  LZD.updated=Date.now();
+  const keys=Object.keys(LZD.days).sort(); keys.slice(0,Math.max(0,keys.length-45)).forEach(k=>delete LZD.days[k]);
+  LZD.past.words=LZD.past.words.slice(-1500); LZD.past.chal=LZD.past.chal.slice(-400);
+  try{localStorage.setItem(LZ,JSON.stringify(LZD))}catch(e){}
+  if(!db) return;
+  clearTimeout(lzTimer); lzTimer=setTimeout(()=>{db.doc(base+"/leisure").set({json:JSON.stringify(LZD),updated:LZD.updated}).catch(e=>console.warn("leisure save failed",e&&e.code))},1200);
+}
+async function loadLeisure(){
+  try{
+    const snap=await db.doc(base+"/leisure").get();
+    if(snap.exists){
+      const r=JSON.parse(snap.data().json||"{}"), rd=r.days||{};
+      Object.keys(rd).forEach(k=>{
+        const a=LZD.days[k]||{}, b=rd[k]||{}, m=Object.assign({},b,a);
+        ["hist","chal","vocab"].forEach(x=>{if(!a[x]&&b[x]) m[x]=b[x]});
+        if(a.chal&&b.chal&&a.chal.title===b.chal.title){m.chal=Object.assign({},a.chal,{found:[...new Set([...(a.chal.found||[]),...(b.chal.found||[])])],gaveUp:a.chal.gaveUp||b.chal.gaveUp})}
+        if(a.vocabScore||b.vocabScore) m.vocabScore=Math.max(a.vocabScore||0,b.vocabScore||0)||undefined;
+        LZD.days[k]=m;
+      });
+      const p=r.past||{};
+      LZD.past.words=[...new Set([...(p.words||[]),...LZD.past.words])];
+      LZD.past.chal=[...new Set([...(p.chal||[]),...LZD.past.chal])];
+    }
+    lzSave();
+  }catch(e){console.warn("leisure load failed",e&&e.code)}
+  lzLoaded=true;
+  if(view.tab==="leisure"&&!view.sub) renderLeisure();
+}
+
+const monthDay=(d=new Date())=>d.toLocaleDateString("en-US",{month:"long",day:"numeric"});
+function dayIndex(){const d=new Date(); return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/DAY)}
+function challengeCat(){return CATS[dayIndex()%CATS.length]}
+
+function renderLeisure(){
+  const now=new Date();
+  main.innerHTML=`<div class="wrap">
+    <div class="stack" style="gap:6px"><span class="eyebrow">${now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><h1>Leisure</h1>
+    <p class="lede">Lighter ways to learn: what happened on this day, one naming challenge, and ten new words. Everything here changes every day.</p></div>
+    <div class="card" id="lzChal"></div>
+    <div class="card" id="lzHist"></div>
+    <div class="card" id="lzVocab"></div>
+  </div>`;
+  paintChal(); paintHist(); paintVocab();
+  lzAuto();
+}
+/* Write today's sections the first time Leisure is opened each day. */
+function lzAuto(){
+  if(!sample||(db&&!lzLoaded)) return;
+  const t=lzToday(), k=dayKey();
+  [["chal",makeChallenge],["hist",makeHistory],["vocab",makeVocab]].forEach(([x,fn])=>{
+    if(!t[x]&&!lzJob[x]&&!lzTried[k+x]){lzTried[k+x]=1; fn()}
+  });
+}
+function lzWaiting(el,title,what){
+  const j=lzJob[what];
+  if(j&&j.busy) return `<h3>${title}</h3><div class="gen">${j.steps.map(s=>`<div class="step ${s.state}"><span class="dot"></span>${esc(s.label)}</div>`).join("")}</div>`;
+  if(j&&j.err) return `<h3>${title}</h3><p class="err" style="margin:0">${esc(j.err)}</p><button class="btn small" style="align-self:flex-start" data-lz="${what}">Try again</button>`;
+  if(!sample) return `<h3>${title}</h3><p class="muted" style="margin:0;font-size:14.5px;line-height:1.45">Claude writes this fresh every day. Connect your Claude helper at the bottom of the Today tab to turn it on.</p>`;
+  return `<h3>${title}</h3><p class="muted" style="margin:0;font-size:14.5px">Getting today's ready…</p>`;
+}
+main.addEventListener("click",e=>{
+  const b=e.target.closest("[data-lz]"); if(!b) return;
+  ({hist:makeHistory,chal:makeChallenge,vocab:makeVocab})[b.dataset.lz]();
+});
+function lzStep(what,i){const j=lzJob[what]; j.steps.forEach((s,n)=>s.state=n<i?"ok":n===i?"on":""); lzPaint(what)}
+function lzPaint(what){if(view.tab!=="leisure"||view.sub) return; ({hist:paintHist,chal:paintChal,vocab:paintVocab})[what]()}
+
+/* ----- This Day in History ----- */
+function paintHist(){
+  const el=$("#lzHist"); if(!el) return;
+  const h=lzToday().hist, title="This day in history";
+  if(!h){el.innerHTML=lzWaiting(el,title,"hist"); return}
+  el.innerHTML=`<div class="spread"><h3>${title}</h3><span class="tag">${esc(monthDay())}</span></div>
+    <div class="hist">${CATS.map(c=>{const ev=h.events.find(x=>x.cat===c.id); if(!ev) return "";
+      return `<div class="ev sub" style="--h:${c.h}"><span class="yr tnum">${esc(ev.year)}</span><div><div class="row" style="gap:6px;margin-bottom:3px">${chip(c)}</div><b>${esc(ev.title)}</b><p>${esc(ev.text)}</p><a href="${wiki(ev.ref)}" target="_blank" rel="noopener">Wikipedia: ${esc(ev.ref)} ↗</a></div></div>`}).join("")}</div>
+    ${h.events.length<CATS.length?`<p class="muted" style="margin:0;font-size:12.5px">${CATS.length-h.events.length} subject${CATS.length-h.events.length===1?"":"s"} left out today because the fact-checker couldn't confirm the date.</p>`:""}`;
+}
+async function makeHistory(){
+  const md=monthDay(), k=dayKey();
+  const j=lzJob.hist={busy:true,steps:[{label:`Finding what happened on ${md}`,state:"on"},{label:"Fact-checking every date",state:""}]};
+  lzPaint("hist");
+  try{
+    const prompt=`You write the "This Day in History" section of Commonplace, a learning app that replaces mindless scrolling. Today is ${md}.
+For EACH of these 11 subjects, give 2 different events that happened on ${md} (any year), clearly tied to that subject:
+${CATS.map(c=>`${c.id} (${c.name})`).join("\n")}
+An event can be a discovery, publication, premiere, founding, opening, ruling, record, first, battle, treaty, or the birth or death of a major figure in that subject. The day and month must be well documented as ${md}. Prefer significant, interesting events, vary the centuries, and give the 2 events per subject different years.
+
+${RULES}
+
+Reply with only JSON: {"events":[{"category":"subject id from the list","year":"year as text, e.g. 1789 or 44 BC","title":"headline of at most 9 words","text":"2 sentences: what happened and why it mattered","ref":"English Wikipedia article title"}]}`;
+    const d=await sample.json(prompt,{cache:false});
+    const ids=CATS.map(c=>c.id);
+    const evs=(Array.isArray(d&&d.events)?d.events:[]).map(e=>({cat:str(e&&e.category,40),year:str(String((e&&e.year)!=null?e.year:""),20),title:str(e&&e.title,120),text:str(e&&e.text,700),ref:str(e&&e.ref,150)})).filter(e=>ids.includes(e.cat)&&e.year&&e.title&&e.text);
+    if(evs.length<6) throw {message:"Not enough events came back. Try again."};
+    lzStep("hist",1);
+    const v=verdicts(await sample.json(checkPrompt(evs.map((e,i)=>({id:"C"+(i+1),text:`On ${md}, ${e.year}: ${e.title}. ${e.text}`}))),{cache:false,modelTier:"complex"}));
+    const ok=evs.filter((e,i)=>v["C"+(i+1)]==="verified");
+    const pick=CATS.map(c=>ok.find(e=>e.cat===c.id)).filter(Boolean);
+    if(!pick.length) throw {message:"The fact-checker couldn't confirm any of the dates. Try again."};
+    const t=LZD.days[k]||(LZD.days[k]={}); t.hist={events:pick,checked:{passed:ok.length,total:evs.length}};
+    lzJob.hist=null; lzSave();
+  }catch(e){lzJob.hist={busy:false,err:aiErr(e)}}
+  lzPaint("hist");
+}
+
+/* ----- Daily challenge: name all ten ----- */
+const normA=s=>" "+String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/&/g," and ").replace(/[^a-z0-9]+/g," ")
+  .replace(/ (the|a|an|of|and|saint|st|mount|mt|river|lake|city|fc) /g," ").replace(/ (the|a|an|of|and|saint|st|mount|mt|river|lake|city|fc) /g," ").trim().replace(/\s+/g," ");
+function lev(a,b){if(a===b) return 0; const m=a.length,n=b.length; if(!m||!n) return m||n; let p=[...Array(n+1).keys()];
+  for(let i=1;i<=m;i++){const c=[i]; for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c} return p[n]}
+function matchItem(guess,items,found){
+  const g=normA(guess); if(!g) return -1;
+  const tol=g.length>=10?2:g.length>=5?1:0;
+  for(let i=0;i<items.length;i++){
+    if(found.includes(i)) continue;
+    const keys=[items[i].name,...(items[i].aliases||[])].map(normA).filter(Boolean);
+    if(keys.some(k=>k===g||(tol&&Math.abs(k.length-g.length)<=tol&&lev(k,g)<=tol))) return i;
+  }
+  for(let i=0;i<items.length;i++){ // already named?
+    if(!found.includes(i)) continue;
+    const keys=[items[i].name,...(items[i].aliases||[])].map(normA);
+    if(keys.includes(g)) return -2;
+  }
+  return -1;
+}
+function paintChal(flash){
+  const el=$("#lzChal"); if(!el) return;
+  const c=lzToday().chal, cat=challengeCat(), title="Daily challenge";
+  if(!c){el.innerHTML=lzWaiting(el,title,"chal")+`<div>${chip(cat)}</div>`; return}
+  const C=CAT[c.cat]||cat, found=c.found||[], done=c.gaveUp||found.length===c.items.length;
+  el.className="card sub"; el.style.setProperty("--h",C.h);
+  el.innerHTML=`<div class="spread"><h3>${title}</h3>${chip(C)}</div>
+    <div class="stack" style="gap:4px"><h2>${esc(c.title)}</h2><div class="muted" style="font-size:13.5px;line-height:1.4">${esc(c.measure)}</div></div>
+    ${done?`<div class="spread"><b style="font-size:18px">${found.length===c.items.length?"All "+c.items.length+". Perfect.":"You named "+found.length+" of "+c.items.length+"."}</b><span class="tag ${found.length===c.items.length?"ok":""} tnum">${found.length}/${c.items.length}</span></div>`
+    :`<form class="guess" id="gForm" autocomplete="off"><input id="gIn" placeholder="Type an answer" aria-label="Your answer" enterkeyhint="go" autocapitalize="off" spellcheck="false"><button class="btn small" type="submit">Enter</button></form>
+      <div class="spread"><span class="muted" id="gMsg" style="font-size:13.5px">${found.length?"":"Spelling doesn't need to be perfect."}</span><span class="tag tnum">${found.length}/${c.items.length}</span></div>`}
+    <ol class="slots">${c.items.map((it,i)=>{const got=found.includes(i), show=got||done;
+      return `<li class="${got?"got":done?"miss":""}${flash===i?" flash":""}"><div>${show?`<div class="nm">${esc(it.name)}</div>${it.detail?`<div class="dt">${esc(it.detail)}</div>`:""}`:""}</div></li>`}).join("")}</ol>
+    ${done?"":`<button class="btn ghost small" style="align-self:flex-start" id="gGive">Give up and show the rest</button>`}`;
+  const f=$("#gForm");
+  if(f){
+    const inp=$("#gIn"), msg=$("#gMsg");
+    f.onsubmit=e=>{e.preventDefault(); const r=matchItem(inp.value,c.items,found);
+      if(r>=0){c.found=[...found,r]; lzSave(); paintChal(r); const n=$("#gIn"); if(n) n.focus()}
+      else{msg.textContent=r===-2?"You already have that one.":`"${inp.value.trim()}" isn't on the list.`; inp.select()}};
+    if(flash!=null) inp.focus();
+  }
+  const g=$("#gGive"); if(g) g.onclick=()=>{if(g.dataset.armed){c.gaveUp=true; lzSave(); paintChal()} else {g.dataset.armed="1"; g.textContent="Tap again to reveal all"}};
+}
+async function makeChallenge(){
+  const cat=challengeCat(), k=dayKey();
+  const j=lzJob.chal={busy:true,steps:[{label:`Setting today's ${cat.name} challenge`,state:"on"},{label:"Checking the list and every answer",state:""}]};
+  lzPaint("chal");
+  const avoid=[...LZD.past.chal];
+  try{
+    for(let attempt=0;attempt<2;attempt++){
+      lzStep("chal",0);
+      const prompt=`You set the daily trivia challenge in Commonplace, a learning app that replaces mindless scrolling. Today's subject: ${cat.name}.
+Write ONE "name them all" challenge: the player tries to name every item on a list of exactly 10. Think of stems like the 10 largest, longest, tallest, fastest, oldest, most populous, best-selling, the first 10, the 10 winners of, the 10 members of... but be creative and make it specific to ${cat.name}.
+Requirements:
+- The list must be objective and well documented: a ranking by a clear measure that standard references agree on, or a fixed historical sequence or set. Avoid anything disputed, subjective ("greatest"), or that changes month to month. If it can change over time, give an "as of" year.
+- Exactly 10 items, in the list's order.
+- Every answer is a name (a person, place, work, team, building, dish, case...) that a curious, well-read adult could recall. No numbers or single letters as answers.
+- Hard but fair: mix famous entries with less obvious ones.
+- Do not repeat or closely resemble these earlier challenges: ${avoid.length?avoid.slice(-60).join("; "):"(none yet)"}
+
+${RULES}
+
+Reply with only JSON: {"title":"the challenge, starting with 'Name the'","measure":"one short line: how the list is defined, e.g. 'By length of main stem, as listed in Britannica'","items":[{"name":"usual full name","aliases":["other accepted answers: shorter forms, common spellings, surname alone for people"],"detail":"one short line of context, e.g. 'about 6,650 km · Africa'","ref":"English Wikipedia article title"}]}`;
+      const d=await sample.json(prompt,{cache:false});
+      const items=(Array.isArray(d&&d.items)?d.items:[]).map(x=>({name:str(x&&x.name,120),aliases:(Array.isArray(x&&x.aliases)?x.aliases:[]).map(a=>str(a,80)).filter(Boolean).slice(0,6),detail:str(x&&x.detail,160),ref:str(x&&x.ref,150)})).filter(x=>x.name);
+      const ctitle=str(d&&d.title,160), measure=str(d&&d.measure,200);
+      if(!ctitle||items.length<8) throw {message:"The challenge came back incomplete. Try again."};
+      lzStep("chal",1);
+      const checks=[{id:"C0",text:`Trivia list "${ctitle}" (${measure}). Stated list, in order: ${items.map((x,i)=>(i+1)+". "+x.name).join("; ")}. Verify that this is the correct and complete list in the correct order for this definition.`},
+        ...items.map((x,i)=>({id:"C"+(i+1),text:`${x.name}: ${x.detail}`}))];
+      const v=verdicts(await sample.json(checkPrompt(checks),{cache:false,modelTier:"complex"}));
+      if(v.C0!=="verified"){avoid.push(ctitle); continue}
+      items.forEach((x,i)=>{if(v["C"+(i+1)]!=="verified") x.detail=""});
+      const t=LZD.days[k]||(LZD.days[k]={});
+      t.chal={cat:cat.id,title:ctitle,measure,items,found:[],gaveUp:false};
+      LZD.past.chal.push(ctitle); lzJob.chal=null; lzSave(); lzPaint("chal"); return;
+    }
+    throw {message:"The fact-checker couldn't confirm two different lists, so nothing was saved. Try again."};
+  }catch(e){lzJob.chal={busy:false,err:aiErr(e)}}
+  lzPaint("chal");
+}
+
+/* ----- Vocabulary: 5 solid words and 5 stretch words a day ----- */
+let vq=null;
+function paintVocab(){
+  const el=$("#lzVocab"); if(!el) return;
+  const t=lzToday(), v=t.vocab, title="Words of the day";
+  if(!v){el.innerHTML=lzWaiting(el,title,"vocab"); return}
+  if(vq){paintVocabQuiz(el,v); return}
+  const group=(lv,label)=>{const ws=v.words.filter(w=>w.level===lv); return ws.length?`<div class="lvl">${label}</div><div class="words">${ws.map(w=>`<div class="word">
+      <div class="w">${esc(w.word)}</div><div class="meta">${esc(w.pron)}${w.pron&&w.pos?" · ":""}${esc(w.pos)}</div>
+      <div class="def">${esc(w.definition)}</div>${w.plain?`<div class="plain">In plain words: ${esc(w.plain)}</div>`:""}
+      <div class="ex">${esc(w.example)}</div>${w.origin?`<div class="or">Origin: ${esc(w.origin)}</div>`:""}</div>`).join("")}</div>`:""};
+  el.innerHTML=`<div class="spread"><h3>${title}</h3><span class="tag tnum">${v.words.length} words</span></div>
+    ${group("solid","Solid vocabulary")}${group("complex","Stretch words")}
+    <div class="row" style="flex-wrap:wrap"><button class="btn small" id="vqGo">Test yourself</button>${t.vocabScore?`<span class="muted" style="font-size:13.5px">Best today: ${t.vocabScore}/${v.words.length}</span>`:""}</div>`;
+  $("#vqGo").onclick=()=>{vq={order:shuffle(v.words.map((_,i)=>i)),i:0,right:0,picked:null}; paintVocab()};
+}
+function paintVocabQuiz(el,v){
+  const W=v.words;
+  if(vq.i>=vq.order.length){
+    const t=lzToday(); t.vocabScore=Math.max(t.vocabScore||0,vq.right); lzSave();
+    el.innerHTML=`<h3>Words of the day</h3><div class="score tnum">${vq.right}/${W.length}</div><p class="lede" style="font-size:16px">${vq.right===W.length?"Every word. They're yours now.":"Read the ones you missed once more, then try again later."}</p>
+      <div class="row"><button class="btn small" id="vqBack">Back to the words</button></div>`;
+    $("#vqBack").onclick=()=>{vq=null; paintVocab()}; return;
+  }
+  const w=W[vq.order[vq.i]];
+  if(!vq.opts) vq.opts=shuffle([w.word,...shuffle(W.filter(x=>x!==w).map(x=>x.word)).slice(0,3)]);
+  el.innerHTML=`<div class="spread"><h3>Which word means…</h3><span class="tag tnum">${vq.i+1}/${W.length}</span></div>
+    <p class="qtext" style="font-size:19px">${esc(w.definition)}</p>
+    <div class="choices">${vq.opts.map((o,k)=>{const st=vq.picked==null?"":o===w.word?"right":o===vq.picked?"wrong":"";
+      return `<button class="choice ${st}" data-vo="${k}" ${vq.picked!=null?"disabled":""}><span class="k">${"ABCD"[k]}</span>${esc(o)}</button>`}).join("")}</div>
+    ${vq.picked!=null?`<div class="ex" style="font-family:var(--read);font-style:italic;font-size:16px;border-left:3px solid var(--accent);padding-left:12px">${esc(w.example)}</div><button class="btn block" id="vqNext">${vq.i+1<W.length?"Next":"See score"}</button>`:""}
+    <button class="linkbtn" style="align-self:flex-start;font-weight:500" id="vqStop">Stop</button>`;
+  el.querySelectorAll("[data-vo]").forEach(b=>b.onclick=()=>{vq.picked=vq.opts[+b.dataset.vo]; if(vq.picked===w.word) vq.right++; paintVocab()});
+  const n=$("#vqNext"); if(n) n.onclick=()=>{vq.i++; vq.picked=null; vq.opts=null; paintVocab()};
+  $("#vqStop").onclick=()=>{vq=null; paintVocab()};
+}
+async function makeVocab(){
+  const k=dayKey();
+  const j=lzJob.vocab={busy:true,steps:[{label:"Choosing today's ten words",state:"on"},{label:"Checking every definition",state:""}]};
+  lzPaint("vocab");
+  try{
+    const prompt=`You choose the daily vocabulary in Commonplace, a learning app that replaces mindless scrolling. The learner is a well-read adult who wants a richer, more precise vocabulary.
+Give exactly 10 English words:
+- 5 with "level":"solid": strong, educated words an adult should know and will use often in writing and speech (the level of: mitigate, candid, ubiquitous, pragmatic, scrutinize).
+- 5 with "level":"complex": rarer, more sophisticated words found in serious books, journalism, and law (the level of: perspicacious, obsequious, sesquipedalian, recalcitrant, pusillanimous).
+Mix parts of speech. No proper nouns, slang, or brand names. Do not use any of these earlier words: ${LZD.past.words.slice(-400).join(", ")||"(none yet)"}
+
+Accuracy rules (strict): definitions must match standard dictionaries (Merriam-Webster, Oxford). Give the etymology only if it is well established; otherwise leave "origin" empty. The example sentence must use the word correctly and naturally.
+
+Reply with only JSON: {"words":[{"word":"the word","level":"solid or complex","pos":"part of speech","pron":"simple respelling with the stressed syllable in capitals, e.g. per-spih-KAY-shus","definition":"clear dictionary-style definition","plain":"what it means in everyday words, at most 12 words","example":"one natural sentence using the word","origin":"short etymology, or empty"}]}`;
+    const d=await sample.json(prompt,{cache:false});
+    const seen=new Set(LZD.past.words.map(x=>x.toLowerCase()));
+    const ws=(Array.isArray(d&&d.words)?d.words:[]).map(w=>({word:str(w&&w.word,40),level:str(w&&w.level,10)==="complex"?"complex":"solid",pos:str(w&&w.pos,30),pron:str(w&&w.pron,60),definition:str(w&&w.definition,300),plain:str(w&&w.plain,120),example:str(w&&w.example,300),origin:str(w&&w.origin,200)}))
+      .filter(w=>w.word&&w.definition&&w.example&&!seen.has(w.word.toLowerCase()));
+    if(ws.length<5) throw {message:"Not enough words came back. Try again."};
+    lzStep("vocab",1);
+    const v=verdicts(await sample.json(checkPrompt(ws.map((w,i)=>({id:"C"+(i+1),text:`The English word "${w.word}" (${w.pos}) means: ${w.definition}${w.origin?" Etymology: "+w.origin:""} Example of correct use: "${w.example}"`}))),{cache:false,modelTier:"complex"}));
+    const ok=ws.filter((w,i)=>v["C"+(i+1)]==="verified");
+    if(ok.length<4) throw {message:`Only ${ok.length} of ${ws.length} words passed the definition check, so they were discarded. Try again.`};
+    const t=LZD.days[k]||(LZD.days[k]={}); t.vocab={words:[...ok.filter(w=>w.level==="solid"),...ok.filter(w=>w.level==="complex")]};
+    LZD.past.words.push(...ok.map(w=>w.word)); lzJob.vocab=null; lzSave();
+  }catch(e){lzJob.vocab={busy:false,err:aiErr(e)}}
+  lzPaint("vocab");
 }
 
 render(true);
