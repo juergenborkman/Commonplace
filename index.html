@@ -33042,14 +33042,14 @@ function genLessonCard(cid,nid){
   const c=CAT[cid], key=nid||cid, st=genState[key], here=nid?lessonsAt(nid):trunkOf(cid), n=here.length+1;
   const where=nid?NODE[nid].name:"Foundations";
   const allDone=nid?!lessonsAt(nid).some(l=>!S.learned[l.id]):!nextLesson(cid);
-  if(st&&st.busy) return `<h3>Writing ${esc(where)}, lesson ${n}</h3><div class="gen">${stepsHTML(st)}</div><button class="btn ghost small" id="genStop" style="align-self:flex-start">Stop</button>`;
+  if(st&&st.busy) return `<h3>Writing ${esc(where)}, module ${n}</h3><p class="muted" style="margin:0;font-size:13.5px">This takes a few minutes. You can keep using the app; it lands here when it's ready.</p><div class="gen">${stepsHTML(st)}</div><button class="btn ghost small" id="genStop" style="align-self:flex-start">Stop</button>`;
   const err=st&&st.err?`<div class="err">${esc(st.err)}</div>`:"";
   if(!sample) return `<h3>${nid&&!here.length?"First lesson here":"More lessons"}</h3><p class="muted" style="margin:0;font-size:14px">${inClaude?"New lessons are written by Claude. Connecting…":"New lessons are written by Claude through your helper. Connect it once at the bottom of the Today tab."}</p>`;
   const what=nid?(here.length?`the next thing to know about ${esc(NODE[nid].name)}`:`the first lesson on ${esc(NODE[nid].name)}`+(NODE[nid].children.length?", an overview that ties its narrower branches together":""))
     :`the next should-know foundation in ${esc(c.name)}`;
-  return `<h3>${esc(where)}, lesson ${n}</h3>
-    <p style="margin:0;font-size:14.5px;line-height:1.45">${here.length&&allDone?"Ready to go deeper. ":""}Claude writes ${what}, building on what you've covered. A second, stricter pass checks every claim and question and drops anything it can't confirm.</p>
-    ${err}<button class="btn ${here.length&&!allDone?"ghost":""} small" id="genGo" style="align-self:flex-start">${here.length?"Write the next lesson":"Write the first lesson"}</button>`;
+  return `<h3>${esc(where)}, module ${n}</h3>
+    <p style="margin:0;font-size:14.5px;line-height:1.45">${here.length&&allDone?"Ready to go deeper. ":""}Claude writes a module of about ${MODULE_WORDS.toLocaleString()} words (roughly a ${Math.round(MODULE_WORDS/200)}-minute read) on ${what}, building on what you've covered. A second, stricter pass checks every paragraph, corrects or removes anything it can't confirm, and checks the quiz. It takes a few minutes and costs about 35 cents.</p>
+    ${err}<button class="btn ${here.length&&!allDone?"ghost":""} small" id="genGo" style="align-self:flex-start">${here.length?"Write the next module":"Write the first module"}</button>`;
 }
 function stepsHTML(st){
   return st.steps.map(s=>`<div class="step ${s.state}"><span class="dot"></span>${esc(s.label)}</div>`).join("");
@@ -33086,7 +33086,7 @@ function renderLesson(id){
     <div class="spread"><button class="back" data-go="${l.node?"node:"+l.node:"cat:"+c.id}">‹ ${esc(l.node?NODE[l.node].name:c.name)}</button>
       <button class="save" id="saveL" aria-pressed="${saved}">${BOOK}${saved?"Saved":"Save"}</button></div>
     <div class="stack" style="gap:8px">
-      <div class="row" style="flex-wrap:wrap">${chip(c)}<span class="eyebrow">${l.node?"Branch lesson "+idx:l.sec?"Unit "+(l.unit+1)+" · Chapter "+l.chap+" · "+l.mins+" min read":"Foundations · Lesson "+idx}</span>${l.ai?'<span class="tag ok">Fact-checked</span>':""}</div>
+      <div class="row" style="flex-wrap:wrap">${chip(c)}<span class="eyebrow">${l.ai&&l.sec?(l.node?"Branch module "+idx:"Module "+idx)+" · "+l.mins+" min read":l.node?"Branch lesson "+idx:l.sec?"Unit "+(l.unit+1)+" · Chapter "+l.chap+" · "+l.mins+" min read":"Foundations · Lesson "+idx}</span>${l.ai?'<span class="tag ok">Fact-checked</span>':""}</div>
       ${l.node?`<div class="pathline" style="white-space:normal">${esc(crumbNames(l.node))}</div>`:""}
       <h1>${esc(l.t)}</h1>${l.s?`<p class="lede">${esc(l.s)}</p>`:""}
     </div>
@@ -33096,7 +33096,7 @@ function renderLesson(id){
     :`<ul class="points">${l.p.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>`}
     ${l.w?`<div class="stack" style="gap:6px"><h3>Why it matters</h3><div class="why">${esc(l.w)}</div></div>`:""}
     <div class="stack" style="gap:8px"><h3>Check the sources</h3>${sourcesHTML(l.src)}
-      ${l.ai?`<div class="check"><span>✓</span><span>Written by Claude, then independently fact-checked: ${l.checked.passed} of ${l.checked.total} claims and questions confirmed. Anything unconfirmed was removed before you saw it.</span></div>`:'<span class="muted" style="font-size:13px">Part of the curated starter library.</span>'}
+      ${l.ai?`<div class="check"><span>✓</span><span>${l.checked.paras?`Written by Claude, then every paragraph was independently fact-checked: ${l.checked.paras-l.checked.fixed-l.checked.dropped} confirmed as written, ${l.checked.fixed} corrected, ${l.checked.dropped} removed. Quiz questions and key terms were checked too.`:`Written by Claude, then independently fact-checked: ${l.checked.passed} of ${l.checked.total} claims and questions confirmed. Anything unconfirmed was removed before you saw it.`}</span></div>`:'<span class="muted" style="font-size:13px">Part of the curated starter library.</span>'}
     </div>
     <div class="card" id="learnBox">${done?learnedBox(l,nx):`<button class="btn block" id="markL">Mark as learned</button><span class="muted" style="font-size:13px;text-align:center">Adds ${l.q.length} questions to your review</span>`}</div>
     ${l.ai?`<div id="rmBox"><button class="linkbtn" id="rmL" style="color:var(--muted);font-weight:500;font-size:13px">Spotted an error? Remove this lesson</button></div>`:""}
@@ -33277,54 +33277,135 @@ Reply with only JSON: {"items":[{"id":"C1","verdict":"verified","note":"short re
 function verdicts(res){const m={}; ((res&&res.items)||[]).forEach(x=>{if(x&&x.id) m[String(x.id).trim()]=String(x.verdict||"").toLowerCase().trim()}); return m}
 const str=(x,max=600)=>typeof x==="string"?x.trim().slice(0,max):"";
 
-async function makeLesson(cid,nid){
-  const c=CAT[cid], key=nid||cid, node=nid?NODE[nid]:null;
+/* Long modules: Claude plans an outline, writes it in parts at the same time, a stricter pass checks
+   every paragraph (fixing or removing anything it can't confirm), then writes and checks the quiz. */
+const MODULE_WORDS=10000, MODULE_SECTIONS=8, MODULE_PARTS=4;
+const WRITE_RULES=RULES.split("\n").filter(x=>!/Wikipedia article/.test(x)).join("\n");
+async function retry(fn,times=2){let e; for(let i=0;i<times;i++){try{return await fn()}catch(x){e=x; if(x&&(x.code==="cancelled"||x.name==="AbortError"||/Daily limit|passphrase/i.test(x.message||""))) throw x}} throw e}
+function moduleScope(cid,nid){
+  const c=CAT[cid], node=nid?NODE[nid]:null;
   const ls=node?lessonsAt(nid):trunkOf(cid);
   const others=lessonsOf(cid).filter(l=>!ls.includes(l)).map(l=>l.t).slice(-80);
   const level=node?"specialized: go one step deeper than the lessons already in this branch, assuming the learner knows the subject's foundations and the broader branches above this one"
-    :ls.length<8?"foundational: core knowledge every educated adult should have":ls.length<16?"intermediate: still essential, building on the foundations":"advanced but still widely referenced: the next layer a well-read person knows";
-  const st=genState[key]={busy:true,ctl:new AbortController(),steps:[{label:"Writing the lesson",state:"on"},{label:"Fact-checking every claim and question",state:""},{label:"Adding it to your path",state:""}]};
-  const paint=()=>paintGen(cid,nid);
-  paint();
-  try{
-    const scope=node?`Subject: ${c.name}. Branch: ${c.name} › ${node.path.join(" › ")}.${node.children.length?` This branch splits into narrower branches: ${node.children.map(k=>NODE[k].name).join(", ")}.`:""}
-Lessons already in this branch, in order:
+    :"advanced but still widely referenced: the next layer a well-read person knows, building on a full Foundations course";
+  return node?`Subject: ${c.name}. Branch: ${c.name} › ${node.path.join(" › ")}.${node.children.length?` This branch splits into narrower branches: ${node.children.map(k=>NODE[k].name).join(", ")}.`:""}
+Modules already in this branch, in order:
 ${ls.length?ls.map((l,i)=>`${i+1}. ${l.t}: ${l.s||""}`).join("\n"):"(none yet)"}
 Other lessons the learner has in ${c.name} (do not repeat these topics):
 ${others.join("; ")}
 
-Write lesson ${ls.length+1} of this branch: ${ls.length?`the next thing a well-informed person going deeper into ${node.name} should know`:`an introduction to ${node.name}`+(node.children.length?" that gives an overview of the whole branch and how its narrower branches fit together":"")}. Stay inside this branch. It must not repeat any topic or fact above. Level: ${level}.`
-    :`Subject: ${c.name}.
-The learner has already studied these foundation lessons in this subject, in order:
-${ls.map((l,i)=>`${i+1}. ${l.t}: ${l.s||""}`).join("\n")}
+This is module ${ls.length+1} of this branch: ${ls.length?`the next thing a well-informed person going deeper into ${node.name} should know`:`an introduction to ${node.name}`+(node.children.length?" that gives an overview of the whole branch and how its narrower branches fit together":"")}. Stay inside this branch. Do not repeat any topic above. Level: ${level}.`
+  :`Subject: ${c.name}.
+The learner has finished the ${c.name} Foundations course and these further modules, in order:
+${ls.slice(-60).map((l,i)=>`${i+1}. ${l.t}: ${l.s||""}`).join("\n")}
 
-Write foundation lesson ${ls.length+1}: the next topic a well-informed adult is expected to know in ${c.name} ("should-know" knowledge). It must not repeat any topic or fact above. Build on what they already know. Level: ${level}.`;
-    const prompt=`You write lessons for Commonplace, a learning app that replaces mindless social media scrolling with real knowledge.
+This is the next module: the next topic a well-informed adult is expected to know in ${c.name}. Do not repeat any topic above. Level: ${level}.`;
+}
+async function makeLesson(cid,nid){
+  const c=CAT[cid], key=nid||cid;
+  const per=Math.round(MODULE_WORDS/MODULE_SECTIONS), perPart=MODULE_SECTIONS/MODULE_PARTS;
+  const st=genState[key]={busy:true,ctl:new AbortController(),steps:[
+    {label:"Planning the module",state:"on"},
+    {label:`Writing about ${MODULE_WORDS.toLocaleString()} words in ${MODULE_PARTS} parts`,state:""},
+    {label:"Fact-checking every paragraph",state:""},
+    {label:"Writing and checking the quiz",state:""},
+    {label:"Adding it to your path",state:""}]};
+  const paint=()=>paintGen(cid,nid);
+  const step=(i,label)=>{st.steps.forEach((s,n)=>s.state=n<i?"ok":n===i?"on":""); if(label) st.steps[i].label=label; paint()};
+  const opt=extra=>Object.assign({signal:st.ctl.signal,cache:false},extra||{});
+  paint();
+  try{
+    const scope=moduleScope(cid,nid);
+    /* 1. outline */
+    const o=await retry(()=>sample.json(`You write long-form lesson modules for Commonplace, a learning app that replaces mindless social media scrolling with real knowledge. Each module reads like a chapter of a good university-level book for an adult general reader.
 ${scope}
 
-${RULES}
+Plan a module of about ${MODULE_WORDS.toLocaleString()} words in exactly ${MODULE_SECTIONS} sections that build on each other: the first section opens the topic, the last one draws it together. Give each section a clear heading and the 4 to 6 specific things it must cover, so no two sections overlap.
 
-Reply with only JSON in this shape:
-{"title":"short title","subtitle":"one short line of context","points":[{"text":"one or two sentences","ref":"English Wikipedia article title"}],"why":"one or two sentences on why this matters","quiz":[{"q":"question","answer":"correct answer","wrong":["wrong answer","wrong answer","wrong answer"]}]}
-Give exactly 5 points and 4 quiz questions. Every quiz question must be answerable from the points and have exactly one correct answer; wrong answers should be plausible but clearly wrong.`;
-    const d=await sample.json(prompt,{signal:st.ctl.signal,cache:false});
-    const points=(Array.isArray(d&&d.points)?d.points:[]).map(p=>({text:str(p&&p.text),ref:str(p&&p.ref,150)})).filter(p=>p.text);
-    const quiz=(Array.isArray(d&&d.quiz)?d.quiz:[]).map(q=>({q:str(q&&q.q,300),a:str(q&&q.answer,200),w:(Array.isArray(q&&q.wrong)?q.wrong:[]).map(x=>str(x,200)).filter(Boolean).slice(0,3)})).filter(q=>q.q&&q.a&&q.w.length===3);
-    if(!str(d&&d.title)||points.length<3||quiz.length<2) throw {message:"The draft lesson was incomplete, so it was discarded. Try again."};
-    st.steps[0].state="ok"; st.steps[1].state="on"; paint();
-    const items=[...points.map((p,i)=>({id:"C"+(i+1),text:p.text})),...quiz.map((q,i)=>({id:"Q"+(i+1),text:`${q.q} | stated answer: ${q.a} | wrong options: ${q.w.join("; ")}`}))];
-    const v=verdicts(await sample.json(checkPrompt(items),{signal:st.ctl.signal,cache:false,modelTier:"complex"}));
-    const okP=points.filter((p,i)=>v["C"+(i+1)]==="verified"), okQ=quiz.filter((q,i)=>v["Q"+(i+1)]==="verified");
-    if(okP.length<3||okQ.length<2) throw {message:`The fact-checker could confirm only ${okP.length} of ${points.length} claims and ${okQ.length} of ${quiz.length} questions, so this lesson was discarded. Try again for a different draft.`};
-    st.steps[1].state="ok"; st.steps[2].state="on"; paint();
-    const refs=[...new Set(okP.map(p=>p.ref).filter(Boolean))].slice(0,5);
-    const lesson={id:cid+"-g"+Date.now().toString(36),cat:cid,node:nid||null,t:str(d.title,120),s:str(d.subtitle,160),p:okP.map(p=>p.text),w:str(d.why)||"",
-      src:refs.length?refs:[c.name],q:okQ.slice(0,3).map(q=>[q.q,q.a,...q.w]),ai:true,checked:{passed:okP.length+okQ.length,total:points.length+quiz.length},created:Date.now()};
+Reply with only JSON: {"title":"short title","subtitle":"one short line of context","why":"one or two sentences on why this matters","sections":[{"heading":"section heading","covers":["specific point","specific point"]}]}`,opt()));
+    const plan=(Array.isArray(o&&o.sections)?o.sections:[]).map(x=>({h:str(x&&x.heading,120),cv:(Array.isArray(x&&x.covers)?x.covers:[]).map(y=>str(y,200)).filter(Boolean)})).filter(x=>x.h).slice(0,MODULE_SECTIONS);
+    if(!str(o&&o.title)||plan.length<4) throw {message:"The outline came back incomplete, so nothing was written. Try again."};
+    const outline=plan.map((x,i)=>`${i+1}. ${x.h}: ${x.cv.join("; ")}`).join("\n");
+    /* 2. write the parts at the same time */
+    step(1);
+    const groups=[]; for(let i=0;i<plan.length;i+=perPart) groups.push(plan.slice(i,i+perPart).map((x,j)=>i+j));
+    let doneParts=0;
+    const parts=await Promise.all(groups.map(g=>retry(async()=>{
+      const d=await sample.json(`You write long-form lesson modules for Commonplace, a learning app that replaces mindless social media scrolling with real knowledge. Write like a good university-level book for an adult general reader: clear, concrete, full of specific names, dates, examples, and explanations of why things happened, never padded.
+${scope}
+
+Module title: ${str(o.title)}
+Full outline (other writers are writing the other sections at the same time, so cover only your sections and do not repeat what other sections cover):
+${outline}
+
+Write ONLY section${g.length>1?"s":""} ${g.map(i=>i+1).join(" and ")}, about ${per.toLocaleString()} words each. Use paragraphs of about 120 to 200 words. ${g[0]===0?"Your first section opens the whole module.":""}${g.includes(plan.length-1)?" Your last section closes the whole module.":""} Do not add an introduction or summary for the module anywhere else.
+
+${WRITE_RULES}
+
+Reply with only JSON: {"sections":[{"heading":"the heading from the outline","paragraphs":["paragraph","paragraph"]}]}`,opt());
+      const secs=(Array.isArray(d&&d.sections)?d.sections:[]).map(x=>[str(x&&x.heading,120),(Array.isArray(x&&x.paragraphs)?x.paragraphs:[]).map(p=>str(p,2500)).filter(p=>p.length>40)]).filter(x=>x[0]&&x[1].length);
+      if(!secs.length) throw {message:"A part of the module came back empty."};
+      doneParts++; st.steps[1].label=`Writing about ${MODULE_WORDS.toLocaleString()} words (${doneParts} of ${groups.length} parts done)`; paint();
+      return secs;
+    })));
+    let sec=parts.flat();
+    /* 3. fact-check each part at the same time */
+    step(2);
+    let ok=0,fixed=0,dropped=0,doneChecks=0;
+    sec=(await Promise.all(parts.map(ps=>retry(async()=>{
+      const paras=[]; ps.forEach((s,si)=>s[1].forEach((p,pi)=>paras.push({id:"P"+(paras.length+1),si,pi,p})));
+      const v=await sample.json(`You are a strict, skeptical fact-checker for an educational app. Check each numbered paragraph below against what is documented in reliable references (Encyclopaedia Britannica, well-cited Wikipedia articles, scholarly consensus).
+For each paragraph reply:
+- "ok" if every factual claim in it, including names, dates, numbers, and causes, is accurate as written and not misleading;
+- "fix" if some claims are wrong, disputed, legendary, or overly precise: give the whole paragraph rewritten with only those claims corrected, softened ("about", "roughly"), or removed, keeping everything else the same;
+- "drop" if the paragraph can't be saved.
+
+${paras.map(x=>x.id+": "+x.p).join("\n\n")}
+
+Reply with only JSON: {"items":[{"id":"P1","verdict":"ok","text":"rewritten paragraph, only for fix","note":"short reason"}]}`,opt({modelTier:"complex"}));
+      const m={}; ((v&&v.items)||[]).forEach(x=>{if(x&&x.id) m[String(x.id).trim()]=x});
+      const out=ps.map(s=>[s[0],[]]);
+      paras.forEach(x=>{const r=m[x.id], vd=r&&String(r.verdict||"").toLowerCase().trim();
+        if(vd==="ok"){ok++; out[x.si][1].push(x.p)}
+        else if(vd==="fix"&&str(r.text,2500).length>40){fixed++; out[x.si][1].push(str(r.text,2500))}
+        else dropped++;});
+      doneChecks++; st.steps[2].label=`Fact-checking every paragraph (${doneChecks} of ${parts.length} parts done)`; paint();
+      return out;
+    })))).flat().filter(s=>s[1].length);
+    const total=ok+fixed+dropped;
+    if(!sec.length||dropped>total*0.25) throw {message:`The fact-checker removed ${dropped} of ${total} paragraphs, which is too many to trust the rest, so this module was discarded. Try again for a fresh draft.`};
+    /* 4. quiz, key terms, sources */
+    step(3);
+    const text=sec.map(s=>"## "+s[0]+"\n"+s[1].join("\n")).join("\n\n");
+    const qz=await retry(()=>sample.json(`Here is a lesson module from Commonplace, a learning app.
+
+${text}
+
+Write study materials for it:
+- 8 multiple-choice quiz questions that test understanding of the most important ideas, not trivia. Each must be answerable from the module, with exactly one correct answer and 3 plausible but clearly wrong answers. Mix recall with "why" and "what followed" questions.
+- 8 key terms from the module with one-sentence definitions.
+- 3 to 5 English Wikipedia article titles where a reader can check and explore the module's main claims.
+
+Reply with only JSON: {"quiz":[{"q":"question","answer":"correct answer","wrong":["wrong","wrong","wrong"]}],"terms":[{"term":"term","def":"definition"}],"refs":["Wikipedia article title"]}`,opt()));
+    const quiz=(Array.isArray(qz&&qz.quiz)?qz.quiz:[]).map(q=>({q:str(q&&q.q,300),a:str(q&&q.answer,200),w:(Array.isArray(q&&q.wrong)?q.wrong:[]).map(x=>str(x,200)).filter(Boolean).slice(0,3)})).filter(q=>q.q&&q.a&&q.w.length===3);
+    const terms=(Array.isArray(qz&&qz.terms)?qz.terms:[]).map(t=>[str(t&&t.term,80),str(t&&t.def,300)]).filter(t=>t[0]&&t[1]).slice(0,10);
+    const refs=[...new Set((Array.isArray(qz&&qz.refs)?qz.refs:[]).map(r=>str(r,150)).filter(Boolean))].slice(0,5);
+    const items=[...quiz.map((q,i)=>({id:"Q"+(i+1),text:`${q.q} | stated answer: ${q.a} | wrong options: ${q.w.join("; ")}`})),...terms.map((t,i)=>({id:"T"+(i+1),text:`Definition of "${t[0]}": ${t[1]}`}))];
+    const v=items.length?verdicts(await retry(()=>sample.json(checkPrompt(items),opt({modelTier:"complex"})))):{};
+    const okQ=quiz.filter((q,i)=>v["Q"+(i+1)]==="verified"), okT=terms.filter((t,i)=>v["T"+(i+1)]==="verified");
+    if(okQ.length<3) throw {message:`Only ${okQ.length} quiz questions passed the check, so this module was discarded. Try again.`};
+    step(4);
+    const words=sec.flatMap(s=>s[1]).join(" ").split(/\s+/).length;
+    const lesson={id:cid+"-g"+Date.now().toString(36),cat:cid,node:nid||null,t:str(o.title,120),s:str(o.subtitle,160),w:str(o.why)||"",
+      sec,terms:okT.length?okT:null,words,mins:Math.max(1,Math.round(words/200)),
+      src:refs.length?refs:[c.name],q:okQ.slice(0,6).map(q=>[q.q,q.a,...q.w]),ai:true,
+      checked:{passed:ok+okQ.length,total:total+quiz.length,fixed,dropped,paras:total},created:Date.now()};
     gen(cid).lessons.push(lesson); save(cid);
     genState[key]=null;
     const cur=view.sub;
     if(cur&&((nid&&cur.type==="node"&&cur.id===nid)||(!nid&&cur.type==="cat"&&cur.cid===cid))) go("learn",{type:"lesson",id:lesson.id});
   }catch(e){
+    if(e&&e.name==="AbortError") e={code:"cancelled"};
     genState[key]={busy:false,err:aiErr(e)}; paint();
   }
 }
