@@ -32733,13 +32733,35 @@ async function flush(){
 }
 function unionById(a,b){const m=new Map(); [...a,...b].forEach(x=>{if(x&&x.id&&!m.has(x.id)) m.set(x.id,x)}); return [...m.values()]}
 
+/* ---------- Claude helper (website version): a Cloudflare Worker that holds the API key ---------- */
+const HK="commonplace-helper";
+function helperCfg(){try{const h=JSON.parse(localStorage.getItem(HK)||"null"); return h&&h.url&&h.pass?h:null}catch(e){return null}}
+async function helperCall(h,path,opt={}){
+  const r=await fetch(h.url.replace(/\/+$/,"")+path,{...opt,headers:{"Content-Type":"application/json","X-Passphrase":h.pass,...(opt.headers||{})}});
+  let body={}; try{body=await r.json()}catch(e){}
+  if(!r.ok){const err=new Error(body.error||("Helper error "+r.status)); err.code=r.status===401?"unauthenticated":r.status>=500?"unavailable":"failed"; throw err}
+  return body;
+}
+function helperSample(h){return {json:async(prompt,o={})=>(await helperCall(h,"/generate",{method:"POST",signal:o.signal,body:JSON.stringify({prompt,tier:o.modelTier||""})})).json}}
+function helperDb(h){return {doc:path=>({
+  get:async()=>{const b=await helperCall(h,"/doc?path="+encodeURIComponent(path)); return {exists:!!b.exists,data:()=>b.data}},
+  set:async obj=>{await helperCall(h,"/doc?path="+encodeURIComponent(path),{method:"PUT",body:JSON.stringify(obj)})}})}}
+const inClaude=!!(window.claude&&window.claude.use);
+
 (async function connect(){
-  if(!window.claude||!window.claude.use) return;
-  window.claude.use("sample").then(s=>{if(s){sample=s; refreshAI()}}).catch(()=>{});
-  const [d,u]=await Promise.all([window.claude.use("db"),window.claude.use("user")]).catch(()=>[null,null]);
-  if(!d||!u) return;
-  let id=null; try{id=await u.id()}catch(e){}
-  if(!id) return;
+  let d=null,id=null;
+  if(inClaude){
+    window.claude.use("sample").then(s=>{if(s){sample=s; refreshAI()}}).catch(()=>{});
+    const [dd,u]=await Promise.all([window.claude.use("db"),window.claude.use("user")]).catch(()=>[null,null]);
+    if(!dd||!u) return;
+    try{id=await u.id()}catch(e){}
+    d=dd;
+  } else {
+    const h=helperCfg(); if(!h) return;
+    sample=helperSample(h); setTimeout(()=>{try{refreshAI()}catch(e){}},0);
+    d=helperDb(h); id="me";
+  }
+  if(!d||!id) return;
   db=d; base="data/users/"+id;
   try{
     const snap=await db.doc(base+"/progress").get();
@@ -32879,7 +32901,22 @@ function renderToday(){
       <textarea id="pTxt" hidden rows="4" style="width:100%;box-sizing:border-box;font:12px ui-monospace,monospace;border-radius:10px;padding:8px" placeholder="Paste a progress code here"></textarea>
       <div style="display:flex;gap:8px" id="pRow" hidden><button class="btn small" id="pGo">Load this progress</button><span class="muted" id="pMsg" style="font-size:13px;align-self:center"></span></div>
     </div>
+    ${inClaude?"":`<div class="card" style="gap:8px">
+      <div class="spread"><h3>Claude helper</h3><span class="tag">${helperCfg()?(sample?"connected":"saved"):"not set up"}</span></div>
+      <p class="muted" style="margin:0;font-size:14px;line-height:1.45">Your helper writes new lessons and facts with Claude, saves them, and keeps your progress in sync across devices. Enter its address and passphrase once on each device.</p>
+      <input id="hUrl" type="url" placeholder="https://commonplace-helper.yourname.workers.dev" value="${esc((helperCfg()||{}).url||"")}" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;font:inherit">
+      <input id="hPass" type="password" placeholder="Passphrase" value="${esc((helperCfg()||{}).pass||"")}" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;font:inherit">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn small" id="hSave">Save and test</button>${helperCfg()?`<button class="btn ghost small" id="hOff">Disconnect</button>`:""}<span class="muted" id="hMsg" style="font-size:13px"></span></div>
+    </div>`}
   </div>`;
+  const hs=document.getElementById("hSave");
+  if(hs) hs.onclick=async()=>{const m=document.getElementById("hMsg"), h={url:document.getElementById("hUrl").value.trim(),pass:document.getElementById("hPass").value};
+    if(!/^https:\/\//.test(h.url)||!h.pass){m.textContent="Enter the https:// address and the passphrase."; return}
+    m.textContent="Testing…";
+    try{await helperCall(h,"/ping"); localStorage.setItem(HK,JSON.stringify(h)); m.textContent="Connected. Reloading…"; setTimeout(()=>location.reload(),600)}
+    catch(e){m.textContent=e.code==="unauthenticated"?"The passphrase didn't match.":"Couldn't reach the helper: "+(e.message||"check the address.")}};
+  const ho=document.getElementById("hOff");
+  if(ho) ho.onclick=()=>{try{localStorage.removeItem(HK)}catch(e){} location.reload()};
   const tx=document.getElementById("pTxt"),row=document.getElementById("pRow"),msg=document.getElementById("pMsg");
   document.getElementById("expP").onclick=async()=>{const code=JSON.stringify(S); tx.hidden=false; row.hidden=true; tx.value=code; tx.select();
     try{await navigator.clipboard.writeText(code); tx.insertAdjacentHTML("afterend","")}catch(e){}
@@ -32975,7 +33012,7 @@ function genLessonCard(cid,nid){
   const allDone=nid?!lessonsAt(nid).some(l=>!S.learned[l.id]):!nextLesson(cid);
   if(st&&st.busy) return `<h3>Writing ${esc(where)}, lesson ${n}</h3><div class="gen">${stepsHTML(st)}</div><button class="btn ghost small" id="genStop" style="align-self:flex-start">Stop</button>`;
   const err=st&&st.err?`<div class="err">${esc(st.err)}</div>`:"";
-  if(!sample) return `<h3>${nid&&!here.length?"First lesson here":"More lessons"}</h3><p class="muted" style="margin:0;font-size:14px">New lessons are written by Claude when this app is opened inside Claude. Open it from your Claude app or claude.ai to add lessons here.</p>`;
+  if(!sample) return `<h3>${nid&&!here.length?"First lesson here":"More lessons"}</h3><p class="muted" style="margin:0;font-size:14px">${inClaude?"New lessons are written by Claude. Connecting…":"New lessons are written by Claude through your helper. Connect it once at the bottom of the Today tab."}</p>`;
   const what=nid?(here.length?`the next thing to know about ${esc(NODE[nid].name)}`:`the first lesson on ${esc(NODE[nid].name)}`+(NODE[nid].children.length?", an overview that ties its narrower branches together":""))
     :`the next should-know foundation in ${esc(c.name)}`;
   return `<h3>${esc(where)}, lesson ${n}</h3>
@@ -33180,7 +33217,7 @@ function fillEnd(){
   el.innerHTML=`<div style="margin-top:auto" class="stack">
     <span class="eyebrow">${deck.length?"End of the stack":"Nothing new here"}</span>
     <h2 style="margin:0">You're caught up on ${esc(scope)} for now.</h2>
-    <p class="lede" style="font-size:17px">Facts you've scrolled past don't come back. ${sample?"Claude can find five more, and a second fact-checking pass drops any it can't confirm.":"Open this app inside Claude to have it find new, fact-checked ones."}</p>
+    <p class="lede" style="font-size:17px">Facts you've scrolled past don't come back. ${sample?"Claude can find five more, and a second fact-checking pass drops any it can't confirm.":"Connect your Claude helper at the bottom of the Today tab to find new, fact-checked ones."}</p>
     ${err}${sample?`<button class="btn" id="moreFacts">Find 5 new facts</button>`:""}
     <button class="btn ghost" data-go="tab:learn">Go learn something</button></div>`;
   const b=$("#moreFacts"); if(b) b.onclick=makeFacts;
